@@ -8,5 +8,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        login: 'src/pages/login.html',
+        dashboard: 'src/pages/index.html',
+        clientes: 'src/pages/clientes.html',
+        chapas: 'src/pages/chapas.html',
+        servicos: 'src/pages/servicos.html',
+        financeiro: 'src/pages/financeiro.html',
+      },
+    },
   },
 });

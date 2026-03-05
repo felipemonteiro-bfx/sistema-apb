@@ -1,4 +1,6 @@
-@import 'tailwindcss/tailwind.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --primary: #2563eb;
@@ -93,7 +95,7 @@ body {
 }
 
 .form-textarea {
-  @apply resize-vertical;
+  @apply resize-y;
 }
 
 .table-responsive {
