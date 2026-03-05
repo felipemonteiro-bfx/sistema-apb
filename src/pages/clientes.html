@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clientes - Sistema APB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="container-main">
+    <div id="sidebar-container"></div>
+    <div class="main-content w-full">
+      <div id="navbar-container"></div>
+      <div class="p-6">
+        <div id="messages"></div>
+
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold">Clientes / Transportadoras</h2>
+          <button class="btn btn-primary" id="btn-novo-cliente">+ Novo Cliente</button>
+        </div>
+
+        <div class="card">
+          <div class="overflow-x-auto">
+            <table class="table-responsive">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>CNPJ</th>
+                  <th>Telefone</th>
+                  <th>Email</th>
+                  <th>Endereço</th>
+                  <th>Cidade</th>
+                  <th>Estado</th>
+                  <th>Valor/Chapa</th>
+                  <th>Prazo (dias)</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="clientes-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Cliente -->
+  <div id="modal-cliente" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="modal-titulo">Novo Cliente</span>
+        <button class="float-right text-2xl leading-none cursor-pointer" id="btn-fechar-modal">×</button>
+      </div>
+      <form id="form-cliente">
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input type="text" class="form-input" id="cliente-nome" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNPJ</label>
+          <input type="text" class="form-input" id="cliente-cnpj" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input type="tel" class="form-input" id="cliente-telefone" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="cliente-email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor Padrão por Chapa</label>
+          <input type="number" class="form-input" id="cliente-valor" step="0.01" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prazo de Pagamento (dias)</label>
+          <input type="number" class="form-input" id="cliente-prazo" value="30" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Endereço</label>
+          <input type="text" class="form-input" id="cliente-endereco" placeholder="Rua, número, bairro" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label">Cidade</label>
+            <input type="text" class="form-input" id="cliente-cidade" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estado (UF)</label>
+            <input type="text" class="form-input" id="cliente-estado" maxlength="2" placeholder="SP" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="../js/clientes.js"></script>
+</body>
+</html>

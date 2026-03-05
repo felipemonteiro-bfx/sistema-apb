@@ -1,0 +1,144 @@
+================================================================================
+              FIREBASE SETUP CHECKLIST - Sistema APB
+================================================================================
+
+Tempo estimado: 5 minutos
+Status: Grátis! (Plano Spark)
+
+================================================================================
+□ PASSO 1 - Acessar Firebase
+================================================================================
+
+□ Abra: https://console.firebase.google.com
+□ Faça login com conta Google (crie se não tiver)
+
+================================================================================
+□ PASSO 2 - Criar Projeto
+================================================================================
+
+□ Clique "+ Criar Projeto"
+□ Nome: sistema-apb
+□ Desabilite Google Analytics
+□ Clique "Criar Projeto"
+□ ⏳ Aguarde ~1 minuto
+
+================================================================================
+□ PASSO 3 - Firestore Database
+================================================================================
+
+□ Menu lateral esquerdo → Firestore Database
+□ Clique "Criar banco de dados"
+□ Localização: us-central1 (ou a mais próxima)
+□ Modo de segurança: "Modo de teste" ✓
+□ Clique "Criar"
+
+================================================================================
+□ PASSO 4 - Criar Coleções
+================================================================================
+
+□ Clique "+ Criar coleção" para cada:
+
+  □ clientes (deixar vazia)
+  □ chapas (deixar vazia)
+  □ servicos (deixar vazia)
+  □ custos_servico (deixar vazia)
+  □ pagamentos (deixar vazia)
+  □ notas_fiscais (deixar vazia)
+
+================================================================================
+□ PASSO 5 - Copiar Credenciais Firebase
+================================================================================
+
+□ Clique ⚙️ Engrenagem (Configurações do Projeto)
+□ Vá em "Sua Apps" → procure por "Web"
+□ Se não houver, clique "+ Adicionar app" → Web
+□ Copie TODA a seção firebaseConfig:
+
+  {
+    apiKey: "...",
+    authDomain: "...",
+    projectId: "...",
+    storageBucket: "...",
+    messagingSenderId: "...",
+    appId: "..."
+  }
+
+================================================================================
+□ PASSO 6 - Preencher .env.local
+================================================================================
+
+Local do arquivo: C:\Users\Administrador\Desktop\sistema APB\.env.local
+
+Cole os valores Firebase:
+
+  □ VITE_FIREBASE_API_KEY = apiKey do Firebase
+  □ VITE_FIREBASE_AUTH_DOMAIN = authDomain
+  □ VITE_FIREBASE_PROJECT_ID = projectId
+  □ VITE_FIREBASE_STORAGE_BUCKET = storageBucket
+  □ VITE_FIREBASE_MESSAGING_SENDER_ID = messagingSenderId
+  □ VITE_FIREBASE_APP_ID = appId
+
+□ Salve o arquivo (Ctrl+S)
+
+================================================================================
+□ PASSO 7 - Rodar o Sistema
+================================================================================
+
+Opção A - Automático (Recomendado):
+  □ Duplo clique em: setup.bat
+
+Opção B - Manual:
+  □ Abra terminal/PowerShell nesta pasta
+  □ npm install
+  □ npm run dev
+
+================================================================================
+□ PASSO 8 - Testar
+================================================================================
+
+□ Navegador abre em: http://localhost:3111
+□ Clique "🚚 Clientes" → "+ Novo Cliente"
+□ Cadastre um cliente teste
+□ Clique "👤 Chapas" → "+ Nova Chapa"
+□ Cadastre uma chapa teste
+□ Clique "📋 Serviços" → "+ Novo Serviço"
+□ Crie um serviço teste
+□ Volte em "📊 Dashboard"
+□ ✅ Veja os dados aparecerem!
+
+================================================================================
+✅ SYSTEM PRONTO!
+================================================================================
+
+Se chegou até aqui: PARABÉNS! 🎉
+
+Próximos passos:
+  → Usar o sistema normalmente
+  → Cadastrar seus próprios dados
+  → Depois: integrar com Cora (nota fiscal)
+
+================================================================================
+❓ DÚVIDAS?
+================================================================================
+
+Arquivo: FIREBASE_SETUP.md (documentação completa)
+Arquivo: setup-firebase.html (guia visual - abra no navegador)
+
+================================================================================
+💰 CUSTOS
+================================================================================
+
+Plano Spark (Grátis):
+  ✓ 50.000 leituras/dia
+  ✓ 20.000 escritas/dia
+  ✓ 1GB armazenamento
+  ✓ Perfeito para MVP!
+
+Quando você quiser escalar:
+  → Upgrade automático para plano pago
+  → Você controla os limites
+
+================================================================================
+Data: 2026-03-05
+Status: ✅ Pronto para usar
+================================================================================

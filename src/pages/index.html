@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Sistema APB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="container-main">
+    <div id="sidebar-container"></div>
+    <div class="main-content w-full">
+      <div id="navbar-container"></div>
+      <div class="p-6">
+        <div id="messages"></div>
+
+        <!-- Grid de Cards Principais -->
+        <div class="grid-dashboard">
+          <div class="stat-card">
+            <div class="stat-label">Faturamento Mês</div>
+            <div class="stat-value text-blue-600" id="faturamento-valor">R$ 0,00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Lucro Mês</div>
+            <div class="stat-value text-green-600" id="lucro-valor">R$ 0,00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Serviços Realizados</div>
+            <div class="stat-value text-purple-600" id="servicos-valor">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Contas a Receber</div>
+            <div class="stat-value text-orange-600" id="receber-valor">R$ 0,00</div>
+          </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div class="card">
+            <div class="card-header">Faturamento por Cliente</div>
+            <canvas id="chartClientes"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header">Status dos Serviços</div>
+            <canvas id="chartStatus"></canvas>
+          </div>
+        </div>
+
+        <!-- Últimos Serviços -->
+        <div class="card">
+          <div class="card-header flex items-center justify-between">
+            <span>Últimos Serviços</span>
+            <a href="/servicos.html" class="text-blue-600 text-sm hover:underline">Ver todos →</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table-responsive">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Data</th>
+                  <th>Chapas</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="ultimos-servicos"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/dashboard.js"></script>
+</body>
+</html>

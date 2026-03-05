@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup Firebase - Sistema APB</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 900px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .step {
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 2px solid #eee;
+    }
+
+    .step:last-child {
+      border-bottom: none;
+    }
+
+    .step-number {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      background: #667eea;
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 50px;
+      font-size: 1.5em;
+      font-weight: bold;
+      margin-right: 15px;
+      vertical-align: top;
+    }
+
+    .step-content {
+      display: inline-block;
+      width: calc(100% - 70px);
+      vertical-align: top;
+    }
+
+    .step h2 {
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 1.3em;
+    }
+
+    .step-list {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .step-list li {
+      padding: 10px 0;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .step-list li:before {
+      content: "▸ ";
+      color: #667eea;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 12px 30px;
+      margin: 10px 10px 0 0;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .button-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .button-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .button-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .button-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .code-block {
+      background: #f5f5f5;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+      border-radius: 4px;
+      color: #333;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      color: #856404;
+    }
+
+    .success {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      color: #155724;
+    }
+
+    .footer {
+      background: #f9f9f9;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #eee;
+    }
+
+    .footer p {
+      color: #666;
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 600px) {
+      .header h1 {
+        font-size: 1.8em;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .step-content {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .step-number {
+        display: block;
+        margin-bottom: 15px;
+        margin-right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔥 Setup Firebase</h1>
+      <p>Sistema APB - 5 minutos para começar</p>
+    </div>
+
+    <div class="content">
+      <!-- PASSO 1 -->
+      <div class="step">
+        <span class="step-number">1</span>
+        <div class="step-content">
+          <h2>Acessar Firebase Console</h2>
+          <ul class="step-list">
+            <li>Abra: <strong>https://console.firebase.google.com</strong></li>
+            <li>Faça login com sua conta Google (crie uma se não tiver)</li>
+            <li>Será grátis! Plano Spark</li>
+          </ul>
+          <a href="https://console.firebase.google.com" target="_blank" class="button button-primary">Abrir Firebase →</a>
+        </div>
+      </div>
+
+      <!-- PASSO 2 -->
+      <div class="step">
+        <span class="step-number">2</span>
+        <div class="step-content">
+          <h2>Criar Novo Projeto</h2>
+          <ul class="step-list">
+            <li>Clique <strong>+ Criar Projeto</strong></li>
+            <li>Nome: <code>sistema-apb</code></li>
+            <li>Desabilite Google Analytics (não precisa)</li>
+            <li>Clique <strong>Criar Projeto</strong></li>
+            <li>⏳ Aguarde ~1 minuto</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- PASSO 3 -->
+      <div class="step">
+        <span class="step-number">3</span>
+        <div class="step-content">
+          <h2>Ativar Firestore Database</h2>
+          <ul class="step-list">
+            <li>No menu lateral esquerdo, clique <strong>Firestore Database</strong></li>
+            <li>Clique <strong>Criar banco de dados</strong></li>
+            <li>Localização: Escolha a mais próxima (ex: us-central1)</li>
+            <li><strong>Modo de segurança: Modo de teste</strong> ✓</li>
+            <li>Clique <strong>Criar</strong></li>
+          </ul>
+          <div class="warning">
+            ⚠️ "Modo de teste" é apenas para desenvolvimento. Depois você configura regras de segurança.
+          </div>
+        </div>
+      </div>
+
+      <!-- PASSO 4 -->
+      <div class="step">
+        <span class="step-number">4</span>
+        <div class="step-content">
+          <h2>Criar Coleções</h2>
+          <ul class="step-list">
+            <li>No Firestore, clique <strong>+ Criar coleção</strong></li>
+            <li>Crie estas coleções (uma por uma):</li>
+          </ul>
+          <div class="code-block">
+clientes
+chapas
+servicos
+custos_servico
+pagamentos
+notas_fiscais
+          </div>
+          <p style="color: #666; margin-top: 10px;">Deixe vazias (dados criarão via app)</p>
+        </div>
+      </div>
+
+      <!-- PASSO 5 -->
+      <div class="step">
+        <span class="step-number">5</span>
+        <div class="step-content">
+          <h2>Copiar Credenciais</h2>
+          <ul class="step-list">
+            <li>Clique <strong>⚙️ Configurações do Projeto</strong> (engrenagem no menu)</li>
+            <li>Vá em abas <strong>Sua Apps</strong> → procure por <strong>Web</strong></li>
+            <li>Se não houver, clique <strong>+ Adicionar app</strong> e selecione <strong>Web</strong></li>
+            <li>Copie TODA a seção <code>firebaseConfig</code></li>
+          </ul>
+          <div class="code-block">
+const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "..."
+};
+          </div>
+        </div>
+      </div>
+
+      <!-- PASSO 6 -->
+      <div class="step">
+        <span class="step-number">6</span>
+        <div class="step-content">
+          <h2>Preencher .env.local</h2>
+          <ul class="step-list">
+            <li>Abra o arquivo: <code>.env.local</code> (na pasta do projeto)</li>
+            <li>Copie os valores do firebaseConfig para aqui:</li>
+          </ul>
+          <div class="code-block">
+VITE_FIREBASE_API_KEY=seu-api-key
+VITE_FIREBASE_AUTH_DOMAIN=seu-projeto.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=seu-project-id
+VITE_FIREBASE_STORAGE_BUCKET=seu-projeto.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=seu-sender-id
+VITE_FIREBASE_APP_ID=seu-app-id
+          </div>
+          <p style="color: #666; margin-top: 10px;">Salve o arquivo (Ctrl+S)</p>
+        </div>
+      </div>
+
+      <!-- PASSO 7 -->
+      <div class="step">
+        <span class="step-number">7</span>
+        <div class="step-content">
+          <h2>Rodar o Sistema</h2>
+          <ul class="step-list">
+            <li><strong>Opção A (Automático):</strong> Duplo clique em <code>setup.bat</code></li>
+            <li><strong>Opção B (Manual):</strong> No terminal:</li>
+          </ul>
+          <div class="code-block">
+npm install
+npm run dev
+          </div>
+          <div class="success">
+            ✅ Navegador abrirá em http://localhost:3111
+          </div>
+        </div>
+      </div>
+
+      <!-- PASSO 8 -->
+      <div class="step">
+        <span class="step-number">8</span>
+        <div class="step-content">
+          <h2>Testar Sistema</h2>
+          <ul class="step-list">
+            <li>Vá em <strong>🚚 Clientes</strong> → <strong>+ Novo Cliente</strong></li>
+            <li>Cadastre um cliente teste</li>
+            <li>Vá em <strong>👤 Chapas</strong> → cadastre uma chapa</li>
+            <li>Vá em <strong>📋 Serviços</strong> → crie um serviço</li>
+            <li>Volte em <strong>📊 Dashboard</strong> → veja os dados aparecerem!</li>
+          </ul>
+          <div class="success">
+            🎉 Sistema funcionando com Firebase!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p><strong>⏱️ Tempo total: ~5 minutos</strong></p>
+      <p style="color: #999; font-size: 0.9em;">Firebase Plano Spark: 100% Grátis | Perfeito para MVP</p>
+    </div>
+  </div>
+</body>
+</html>
