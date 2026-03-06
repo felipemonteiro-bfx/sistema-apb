@@ -1,4 +1,4 @@
-const FUNCTIONS_URL = 'https://us-central1-sistema-apb.cloudfunctions.net';
+import { FUNCTIONS_URL } from './config.js';
 
 export function initAssistente(getContext) {
   const btn = document.getElementById('btn-assistente');

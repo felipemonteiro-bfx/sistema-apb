@@ -5,20 +5,19 @@ MVP funcional para gestão de serviços, custos, faturamento e lucro real de uma
 ## 📋 Stack
 
 - **Frontend**: HTML + TailwindCSS + JavaScript Vanilla
-- **Backend**: Supabase (PostgreSQL)
+- **Backend**: Firebase (Firestore + Auth)
 - **Deploy**: Vercel
 - **Build**: Vite
 
 ## 🚀 Setup Inicial
 
-### 1. Criar Projeto Supabase
+### 1. Criar Projeto Firebase
 
-1. Acesse [supabase.com](https://supabase.com)
-2. Crie um novo projeto
-3. Na aba **SQL Editor**, execute o conteúdo do arquivo `schema.sql` para criar todas as tabelas
-4. Na aba **Settings > API**, copie:
-   - `URL` (VITE_SUPABASE_URL)
-   - `anon public` key (VITE_SUPABASE_ANON_KEY)
+Siga o guia completo em [FIREBASE_SETUP.md](FIREBASE_SETUP.md). Resumo:
+
+1. Acesse [console.firebase.google.com](https://console.firebase.google.com)
+2. Crie um projeto e ative Firestore e Authentication
+3. Crie as coleções: `clientes`, `chapas`, `servicos`, `custos_servico`, `pagamentos`, `notas_fiscais`, `config`
 
 ### 2. Configurar Variáveis de Ambiente
 
@@ -28,11 +27,15 @@ Copie o arquivo `.env.example` para `.env.local`:
 cp .env.example .env.local
 ```
 
-Abra `.env.local` e preencha:
+Abra `.env.local` e preencha com as credenciais do Firebase (Configurações do Projeto > Sua Apps > Web):
 
 ```
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua-chave-aqui
+VITE_FIREBASE_API_KEY=sua-api-key
+VITE_FIREBASE_AUTH_DOMAIN=seu-projeto.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=seu-projeto-id
+VITE_FIREBASE_STORAGE_BUCKET=seu-projeto.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=seu-sender-id
+VITE_FIREBASE_APP_ID=seu-app-id
 ```
 
 ### 3. Instalar Dependências
@@ -68,7 +71,7 @@ Acesse http://localhost:3000 no navegador.
   │   │   ├── navbar.html
   │   │   └── sidebar.html
   │   ├── js/
-  │   │   ├── supabase.js         # Cliente Supabase e queries
+  │   │   ├── firebase.js         # Cliente Firebase e queries
   │   │   ├── dashboard.js        # Lógica do dashboard
   │   │   ├── clientes.js         # Gestão de clientes
   │   │   ├── chapas.js           # Gestão de chapas
@@ -77,7 +80,6 @@ Acesse http://localhost:3000 no navegador.
   │   │   └── utils.js            # Funções auxiliares
   │   └── css/
   │       └── styles.css          # Estilos base
-  ├── schema.sql                  # Script SQL do banco
   ├── index.html                  # Entry point
   ├── vite.config.js              # Config Vite
   ├── package.json
@@ -143,12 +145,13 @@ Custos incluem:
 - Diária das chapas
 - Custos adicionais (uber, EPI, etc)
 
-## 📱 Integração Supabase
+## 📱 Integração Firebase
 
-O arquivo `src/js/supabase.js` contém:
-- Inicialização do cliente
-- Queries para todas as tabelas
+O arquivo `src/js/firebase.js` contém:
+- Inicialização do cliente Firestore e Auth
+- Queries para todas as coleções
 - Funções de CRUD
+- Subscriptions em tempo real
 - Queries para dashboard
 
 ## 🚢 Deploy em Vercel
@@ -163,21 +166,22 @@ vercel login
 ### 2. Deploy
 
 ```bash
-vercel
+npm run deploy   # Build + vercel --prod
+# ou
+npm run check    # Só validar build
+vercel --prod    # Deploy manual
 ```
 
 Ou:
 1. Faça push do projeto para GitHub
 2. Acesse [vercel.com](https://vercel.com)
 3. Importe o repositório
-4. Adicione as variáveis de ambiente (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY)
+4. Adicione as variáveis de ambiente (VITE_FIREBASE_*)
 5. Clique em Deploy
 
 ## 🔧 Variáveis de Ambiente (Vercel)
 
-Na dashboard do Vercel, adicione:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+Na dashboard do Vercel, adicione todas as variáveis `VITE_FIREBASE_*` do seu `.env.local`.
 
 ## 📈 Roadmap
 
@@ -200,18 +204,14 @@ Na dashboard do Vercel, adicione:
 
 ## 🆘 Troubleshooting
 
-### "Missing Supabase environment variables"
+### "Configure o .env.local com as credenciais do Firebase"
 - Verifique se `.env.local` existe
 - Copie `.env.example` para `.env.local`
-- Preencha as chaves corretamente
+- Preencha as credenciais do Firebase (veja [FIREBASE_SETUP.md](FIREBASE_SETUP.md))
 
-### Tabelas não aparecem no Supabase
-- Execute novamente o `schema.sql` na aba SQL Editor
-- Verifique se não há erros na execução
-
-### CORS error ao conectar
-- Supabase CORS está configurado automaticamente
-- Se persistir, verifique a URL do Supabase em `.env.local`
+### Coleções não aparecem no Firestore
+- Crie as coleções manualmente no console Firebase
+- Regras de segurança devem permitir leitura/escrita (ajuste conforme necessário)
 
 ## 📝 Notas
 

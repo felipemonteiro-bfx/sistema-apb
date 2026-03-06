@@ -8,6 +8,7 @@
   <title>Clientes - Sistema APB</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>
@@ -22,6 +23,8 @@
           <h2 class="page-title">Clientes / Transportadoras</h2>
           <div class="flex gap-2">
             <input type="text" id="filter-cliente-nome" class="form-input py-2 w-48" placeholder="Filtrar por nome..." />
+            <button class="btn btn-secondary" id="btn-exportar-csv">Exportar CSV</button>
+            <button class="btn btn-secondary" id="btn-exportar-pdf">Exportar PDF</button>
             <button class="btn btn-primary" id="btn-novo-cliente">+ Novo Cliente</button>
           </div>
         </div>
@@ -47,6 +50,7 @@
                   <th>CNPJ</th>
                   <th>Telefone</th>
                   <th>Email</th>
+                  <th>CEP</th>
                   <th>Endereço</th>
                   <th>Cidade</th>
                   <th>Estado</th>
@@ -102,6 +106,10 @@
             <option value="sim">Sim</option>
             <option value="nao" selected>Não</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CEP</label>
+          <input type="text" class="form-input" id="cliente-cep" placeholder="00000-000" maxlength="9" />
         </div>
         <div class="form-group">
           <label class="form-label">Endereço</label>

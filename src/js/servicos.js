@@ -10,6 +10,7 @@ import {
   insertNotaFiscal,
   getConfigRecibo,
   getConfigNFSe,
+  getConfigEmpresa,
   requireAuth,
 } from './firebase.js';
 import { gerarHtmlRecibo, aplicarPlaceholders } from './recibo-template.js';
@@ -21,43 +22,21 @@ import {
   showSuccess,
   openModal,
   closeModal,
+  setTaxaImposto,
   calculateLucro,
   getStatusBadge,
   setupNavbarAuth,
-  setupSyncIndicator,
-  initSidebarMobile,
-  initTheme,
-  initKeyboardShortcuts,
 } from './utils.js';
-import { loadSearchData, initGlobalSearch } from './search.js';
-import { initAssistente } from './assistente.js';
+import { initApp } from './app-init.js';
+import { FUNCTIONS_URL } from './config.js';
 
 let servicos = [];
 let clientes = [];
 let custosTemp = [];
 let notasFiscais = [];
 let servicoEditando = null;
+let configEmpresa = null;
 
-async function loadComponents() {
-  try {
-    const navbarRes = await fetch('../components/navbar.html');
-    const sidebarRes = await fetch('../components/sidebar.html');
-
-    document.getElementById('navbar-container').innerHTML = await navbarRes.text();
-    document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
-
-    setActiveMenuItem('servicos');
-    initTheme();
-    initKeyboardShortcuts();
-    setupSyncIndicator();
-    initSidebarMobile();
-    initAssistente();
-    loadSearchData();
-    initGlobalSearch();
-  } catch (error) {
-    console.error('Erro ao carregar componentes:', error);
-  }
-}
 
 // Event listeners
 document.getElementById('btn-novo-servico')?.addEventListener('click', () => {
@@ -67,6 +46,18 @@ document.getElementById('btn-novo-servico')?.addEventListener('click', () => {
   notasFiscais = [];
   document.getElementById('form-servico').reset();
   document.getElementById('servico-data').valueAsDate = new Date();
+  if (configEmpresa?.status_padrao_servico) {
+    const statusEl = document.getElementById('servico-status');
+    if (statusEl) statusEl.value = configEmpresa.status_padrao_servico;
+  }
+  const lastClienteId = localStorage.getItem('apb_ultimo_cliente');
+  if (lastClienteId && clientes.some((c) => c.id === lastClienteId)) {
+    const sel = document.getElementById('servico-cliente');
+    if (sel) {
+      sel.value = lastClienteId;
+      sel.dispatchEvent(new Event('change'));
+    }
+  }
   renderCustosTemp();
   document.getElementById('notas-fiscais-section')?.classList.add('hidden');
   openModal('modal-servico');
@@ -91,6 +82,15 @@ document.getElementById('modal-servico')?.addEventListener('click', (e) => {
 document.getElementById('servico-quantidade')?.addEventListener('change', updateTotal);
 document.getElementById('servico-valor')?.addEventListener('change', updateTotal);
 
+document.getElementById('servico-cliente')?.addEventListener('change', () => {
+  const id = document.getElementById('servico-cliente')?.value;
+  const c = clientes.find((x) => x.id === id);
+  if (c?.valor_padrao_chapa != null) {
+    document.getElementById('servico-valor').value = c.valor_padrao_chapa;
+    updateTotal();
+  }
+});
+
 document.getElementById('btn-add-custo')?.addEventListener('click', () => {
   custosTemp.push({ tipo_custo: 'outros', valor: 0, descricao: '' });
   renderCustosTemp();
@@ -98,7 +98,6 @@ document.getElementById('btn-add-custo')?.addEventListener('click', () => {
 
 document.getElementById('btn-add-nf')?.addEventListener('click', addNotaFiscal);
 
-const FUNCTIONS_URL = 'https://us-central1-sistema-apb.cloudfunctions.net';
 document.getElementById('btn-enviar-recibo')?.addEventListener('click', abrirModalReciboEmail);
 document.getElementById('btn-visualizar-recibo')?.addEventListener('click', visualizarRecibo);
 document.getElementById('btn-emitir-nfse')?.addEventListener('click', emitirNFSe);
@@ -108,6 +107,8 @@ document.getElementById('modal-recibo-email')?.addEventListener('click', (e) => 
   if (e.target.id === 'modal-recibo-email') closeModal('modal-recibo-email');
 });
 document.getElementById('btn-confirmar-envio')?.addEventListener('click', enviarReciboEmail);
+document.getElementById('btn-exportar-csv')?.addEventListener('click', () => exportarServicosCSV());
+document.getElementById('btn-exportar-pdf')?.addEventListener('click', () => exportarServicosPDF());
 
 function updateTotal() {
   const quantidade = parseFloat(document.getElementById('servico-quantidade').value) || 0;
@@ -204,6 +205,7 @@ async function handleSaveServico(e) {
       }
     }
 
+    if (clienteId) localStorage.setItem('apb_ultimo_cliente', clienteId);
     closeModal('modal-servico');
     await loadServicos();
   } catch (error) {
@@ -233,7 +235,114 @@ async function loadServicos() {
 
   subscribeServicos((data) => {
     servicos = data;
+    atualizarDatalistsSugestoes();
     renderServicos();
+  });
+}
+
+function atualizarDatalistsSugestoes() {
+  const ultimos = servicos.slice(0, 30);
+  const transportadoras = [...new Set(ultimos.map((s) => s.transportadora).filter(Boolean))].slice(0, 10);
+  const fornecedores = [...new Set(ultimos.map((s) => s.fornecedor).filter(Boolean))].slice(0, 10);
+  const locais = [...new Set(ultimos.map((s) => s.local_servico).filter(Boolean))].slice(0, 10);
+  const carretas = [...new Set(ultimos.map((s) => s.carreta).filter(Boolean))].slice(0, 10);
+  const conteineres = [...new Set(ultimos.map((s) => s.conteiner).filter(Boolean))].slice(0, 10);
+
+  const escapeHtml = (s) => {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  };
+  const setDatalist = (id, values) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = values.map((v) => `<option value="${escapeHtml(v)}">`).join('');
+  };
+  setDatalist('datalist-transportadora', transportadoras);
+  setDatalist('datalist-fornecedor', fornecedores);
+  setDatalist('datalist-local', locais);
+  setDatalist('datalist-carreta', carretas);
+  setDatalist('datalist-conteiner', conteineres);
+}
+
+function exportarServicosCSV() {
+  const filtered = getFilteredServicos ? getFilteredServicos() : servicos;
+  if (filtered.length === 0) {
+    showError('Nenhum serviço para exportar.');
+    return;
+  }
+  const cols = ['Data', 'Cliente', 'Carreta', 'Contêiner', 'Transportadora', 'Local', 'Chapas', 'Valor Total', 'Status'];
+  const rows = filtered.map((s) => [
+    s.data_servico,
+    s.clientes?.nome || '',
+    s.carreta || '',
+    s.conteiner || '',
+    s.transportadora || '',
+    s.local_servico || '',
+    s.quantidade_chapas ?? '',
+    (s.valor_total || 0).toString().replace('.', ','),
+    s.status || '',
+  ]);
+  const csv = [cols.join(';'), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';'))].join('\n');
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `servicos-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showSuccess('CSV exportado com sucesso!');
+}
+
+function exportarServicosPDF() {
+  const filtered = getFilteredServicos ? getFilteredServicos() : servicos;
+  if (filtered.length === 0) {
+    showError('Nenhum serviço para exportar.');
+    return;
+  }
+  if (typeof html2pdf === 'undefined') {
+    showError('Biblioteca PDF não carregada. Recarregue a página.');
+    return;
+  }
+  const rows = filtered
+    .map(
+      (s) =>
+        `<tr>
+          <td>${formatDate(s.data_servico)}</td>
+          <td>${s.clientes?.nome || '—'}</td>
+          <td>${s.carreta || '—'}</td>
+          <td>${s.conteiner || '—'}</td>
+          <td>${formatCurrency(s.valor_total || 0)}</td>
+          <td>${s.status || '—'}</td>
+        </tr>`
+    )
+    .join('');
+  const html = `
+    <div style="font-family:sans-serif;padding:20px;font-size:12px;">
+      <h2 style="margin:0 0 16px 0;">Relatório de Serviços - Sistema APB</h2>
+      <p style="color:#666;margin:0 0 16px 0;">Exportado em ${new Date().toLocaleString('pt-BR')} — ${filtered.length} registros</p>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#1e3a5f;color:#fff;">
+            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Data</th>
+            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Cliente</th>
+            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Carreta</th>
+            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Contêiner</th>
+            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Valor</th>
+            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Status</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  div.style.position = 'absolute';
+  div.style.left = '-9999px';
+  document.body.appendChild(div);
+  html2pdf().set({ filename: `servicos-${new Date().toISOString().slice(0, 10)}.pdf`, margin: 10 }).from(div.firstElementChild).save().then(() => {
+    document.body.removeChild(div);
+    showSuccess('PDF exportado com sucesso!');
   });
 }
 
@@ -481,6 +590,11 @@ async function enviarReciboEmail() {
     const template = await getConfigRecibo();
     const htmlRecibo = gerarHtmlRecibo(template, servicoEditando);
 
+    let from;
+    const email = (template.email_remetente || '').trim();
+    const nome = (template.nome_remetente || '').trim();
+    if (email) from = nome ? `${nome} <${email}>` : email;
+
     const res = await fetch(`${FUNCTIONS_URL}/enviarReciboEmail`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -490,6 +604,7 @@ async function enviarReciboEmail() {
         mensagem: mensagem || undefined,
         servico: servicoEditando,
         html: htmlRecibo,
+        from,
       }),
     });
     const data = await res.json();
@@ -590,8 +705,11 @@ async function addNotaFiscal() {
 
 // Proteger rota e inicializar
 requireAuth().then(async (user) => {
-  await loadComponents();
+  await initApp('servicos');
   await setupNavbarAuth(user);
+  const cfg = await getConfigEmpresa();
+  configEmpresa = cfg;
+  if (cfg?.taxa_imposto != null) setTaxaImposto(cfg.taxa_imposto);
   const m = document.getElementById('current-month');
   if (m) m.textContent = `Mês: ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
   loadServicos();

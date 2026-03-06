@@ -1,7 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Acesso direto (sem login) - permite leitura e escrita
+    // ============================================================
+    // Modo atual: Acesso direto (sem login).
+    // Permite leitura/escrita para qualquer pessoa.
+    // RISCO: Dados ficam expostos publicamente. Use apenas em
+    //        ambiente de teste ou apps sem dados sensíveis.
+    //
+    // Para habilitar autenticação: troque a regra abaixo por:
+    //   allow read, write: if request.auth != null;
+    // e integre Firebase Auth em requireAuth (firebase.js).
+    // ============================================================
     match /{document=**} {
       allow read, write: if true;
     }

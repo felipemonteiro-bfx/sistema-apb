@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "check": "npm run build",
+    "deploy": "npm run check && vercel --prod",
+    "vercel:env": "node scripts/vercel-env.cjs",
     "preview": "vite preview",
     "firebase:deploy": "firebase deploy --only firestore"
   },

@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Serviços - Sistema APB</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>
@@ -19,7 +20,11 @@
 
         <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
           <h2 class="page-title">Registro de Serviços</h2>
-          <button class="btn btn-primary" id="btn-novo-servico">+ Novo Serviço</button>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary" id="btn-exportar-csv">Exportar CSV</button>
+            <button class="btn btn-secondary" id="btn-exportar-pdf">Exportar PDF</button>
+            <button class="btn btn-primary" id="btn-novo-servico">+ Novo Serviço</button>
+          </div>
         </div>
 
         <div class="card mb-4">
@@ -105,11 +110,13 @@
           <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
               <label class="form-label">Carreta</label>
-              <input type="text" class="form-input" id="servico-carreta" placeholder="Placa ou identificação" />
+              <input type="text" class="form-input" id="servico-carreta" list="datalist-carreta" placeholder="Placa ou identificação" />
+              <datalist id="datalist-carreta"></datalist>
             </div>
             <div class="form-group">
               <label class="form-label">Contêiner</label>
-              <input type="text" class="form-input" id="servico-conteiner" placeholder="Número do contêiner" />
+              <input type="text" class="form-input" id="servico-conteiner" list="datalist-conteiner" placeholder="Número do contêiner" />
+              <datalist id="datalist-conteiner"></datalist>
             </div>
             <div class="form-group">
               <label class="form-label">NFe n.</label>
@@ -121,11 +128,13 @@
             </div>
             <div class="form-group">
               <label class="form-label">Transportadora</label>
-              <input type="text" class="form-input" id="servico-transportadora" placeholder="Nome da transportadora" />
+              <input type="text" class="form-input" id="servico-transportadora" list="datalist-transportadora" placeholder="Nome da transportadora" />
+              <datalist id="datalist-transportadora"></datalist>
             </div>
             <div class="form-group">
               <label class="form-label">Fornecedor</label>
-              <input type="text" class="form-input" id="servico-fornecedor" placeholder="Nome do fornecedor" />
+              <input type="text" class="form-input" id="servico-fornecedor" list="datalist-fornecedor" placeholder="Nome do fornecedor" />
+              <datalist id="datalist-fornecedor"></datalist>
             </div>
           </div>
         </div>
@@ -176,7 +185,8 @@
 
         <div class="form-group">
           <label class="form-label">Local do Serviço</label>
-          <input type="text" class="form-input" id="servico-local" placeholder="Endereço ou local de execução" />
+          <input type="text" class="form-input" id="servico-local" list="datalist-local" placeholder="Endereço ou local de execução" />
+          <datalist id="datalist-local"></datalist>
         </div>
 
         <div class="form-group">

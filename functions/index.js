@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { onRequest } = require('firebase-functions/v2/https');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -12,7 +14,7 @@ exports.aiAssist = onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(204).send('');
   }
-  if (req.method !== 'POST') return res.status(405).send('Method not allowed');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -50,7 +52,7 @@ exports.gerarBoletoCora = onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(204).send('');
   }
-  if (req.method !== 'POST') return res.status(405).send('Method not allowed');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const clientId = process.env.CORA_CLIENT_ID;
   const clientSecret = process.env.CORA_CLIENT_SECRET;
@@ -63,8 +65,11 @@ exports.gerarBoletoCora = onRequest(async (req, res) => {
     const idempotencyKey = crypto.randomUUID();
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const { valor, vencimento, clienteNome, clienteCnpj } = req.body || {};
+    const coraApiUrl =
+      process.env.CORA_API_URL || 'https://api.stage.cora.com.br';
+    const invoiceUrl = `${coraApiUrl.replace(/\/$/, '')}/v2/invoices`;
 
-    const response = await fetch('https://api.stage.cora.com.br/v2/invoices', {
+    const response = await fetch(invoiceUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -78,6 +83,10 @@ exports.gerarBoletoCora = onRequest(async (req, res) => {
       }),
     });
     const data = await response.json();
+    if (!response.ok) {
+      const msg = data?.message || data?.error || data?.errors?.[0]?.message || 'Erro ao gerar boleto';
+      return res.status(response.status >= 400 ? response.status : 500).json({ error: msg });
+    }
     res.json(data);
   } catch (err) {
     console.error('gerarBoletoCora error:', err);
@@ -85,7 +94,7 @@ exports.gerarBoletoCora = onRequest(async (req, res) => {
   }
 });
 
-/** Enviar recibo de serviço por email. Configure RESEND_API_KEY. */
+/** Enviar recibo de serviço por email via Gmail SMTP. Configure GMAIL_USER e GMAIL_APP_PASSWORD. */
 exports.enviarReciboEmail = onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') {
@@ -93,16 +102,24 @@ exports.enviarReciboEmail = onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(204).send('');
   }
-  if (req.method !== 'POST') return res.status(405).send('Method not allowed');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'RESEND_API_KEY não configurada. Configure em Firebase Functions.' });
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+  if (!gmailUser || !gmailPass) {
+    return res.status(500).json({
+      error: 'GMAIL_USER e GMAIL_APP_PASSWORD devem ser configurados nas variáveis de ambiente do Firebase.',
+    });
   }
 
   try {
-    const { Resend } = require('resend');
-    const resend = new Resend(apiKey);
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: { user: gmailUser, pass: gmailPass },
+    });
 
     const { to, subject, mensagem, servico, from, html } = req.body || {};
     if (!to || typeof to !== 'string') {
@@ -122,7 +139,7 @@ exports.enviarReciboEmail = onRequest(async (req, res) => {
         .replace(/{{conteiner}}/gi, s.conteiner || '');
       htmlFinal = mensagemHtml ? `<div style="font-family:sans-serif;margin-bottom:20px;">${mensagemHtml}</div>${html}` : html;
     } else {
-    const reciboHtml = `
+      const reciboHtml = `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
         <h2 style="color:#1e3a5f;">Recibo de Serviço - Sistema APB</h2>
         <table style="width:100%;border-collapse:collapse;margin:20px 0;">
@@ -137,34 +154,28 @@ exports.enviarReciboEmail = onRequest(async (req, res) => {
         </table>
         ${s.observacoes ? `<p><strong>Observações:</strong> ${s.observacoes}</p>` : ''}
       </div>`;
-
-    const mensagemHtml = (mensagem || '')
-      .replace(/\n/g, '<br>')
-      .replace(/{{cliente}}/gi, s.clientes?.nome || '')
-      .replace(/{{valor}}/gi, `R$ ${(s.valor_total || 0).toFixed(2).replace('.', ',')}`)
-      .replace(/{{data}}/gi, s.data_servico || '')
-      .replace(/{{carreta}}/gi, s.carreta || '')
-      .replace(/{{conteiner}}/gi, s.conteiner || '');
-
-    htmlFinal = mensagemHtml
-      ? `<div style="font-family:sans-serif;margin-bottom:20px;">${mensagemHtml}</div>${reciboHtml}`
-      : reciboHtml;
+      const mensagemHtml = (mensagem || '')
+        .replace(/\n/g, '<br>')
+        .replace(/{{cliente}}/gi, s.clientes?.nome || '')
+        .replace(/{{valor}}/gi, `R$ ${(s.valor_total || 0).toFixed(2).replace('.', ',')}`)
+        .replace(/{{data}}/gi, s.data_servico || '')
+        .replace(/{{carreta}}/gi, s.carreta || '')
+        .replace(/{{conteiner}}/gi, s.conteiner || '');
+      htmlFinal = mensagemHtml
+        ? `<div style="font-family:sans-serif;margin-bottom:20px;">${mensagemHtml}</div>${reciboHtml}`
+        : reciboHtml;
     }
 
-    const fromEmail = from || 'Sistema APB <onboarding@resend.dev>';
+    const fromEmail = from || `Sistema APB <${gmailUser}>`;
 
-    const { data, error } = await resend.emails.send({
+    const info = await transporter.sendMail({
       from: fromEmail,
-      to: [to.trim()],
+      to: to.trim(),
       subject: subject || `Recibo - ${s.clientes?.nome || 'Serviço'} - ${s.data_servico || ''}`,
       html: htmlFinal,
     });
 
-    if (error) {
-      console.error('Resend error:', error);
-      return res.status(500).json({ error: error.message || 'Erro ao enviar email' });
-    }
-    res.json({ success: true, id: data?.id });
+    res.json({ success: true, id: info.messageId });
   } catch (err) {
     console.error('enviarReciboEmail error:', err);
     res.status(500).json({ error: err.message || 'Erro ao enviar email' });
@@ -179,7 +190,7 @@ exports.emitirNFSe = onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(204).send('');
   }
-  if (req.method !== 'POST') return res.status(405).send('Method not allowed');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.NFE_IO_API_KEY;
   const companyId = process.env.NFE_IO_COMPANY_ID;

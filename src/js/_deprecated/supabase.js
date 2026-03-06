@@ -1,3 +1,7 @@
+/**
+ * @deprecated Este módulo não está em uso. O sistema utiliza Firebase/Firestore.
+ * Mantido em _deprecated para referência histórica.
+ */
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;

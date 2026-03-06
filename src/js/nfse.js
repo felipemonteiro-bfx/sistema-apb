@@ -4,33 +4,8 @@ import {
   showError,
   showSuccess,
   setupNavbarAuth,
-  setupSyncIndicator,
-  initSidebarMobile,
-  initTheme,
-  initKeyboardShortcuts,
 } from './utils.js';
-import { loadSearchData, initGlobalSearch } from './search.js';
-import { initAssistente } from './assistente.js';
-
-async function loadComponents() {
-  try {
-    const navbarRes = await fetch('../components/navbar.html');
-    const sidebarRes = await fetch('../components/sidebar.html');
-    document.getElementById('navbar-container').innerHTML = await navbarRes.text();
-    document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
-
-    setActiveMenuItem('nfse');
-    initTheme();
-    initKeyboardShortcuts();
-    setupSyncIndicator();
-    initSidebarMobile();
-    initAssistente();
-    loadSearchData();
-    initGlobalSearch();
-  } catch (err) {
-    console.error('Erro ao carregar componentes:', err);
-  }
-}
+import { initApp } from './app-init.js';
 
 async function salvar() {
   const dados = {
@@ -54,7 +29,7 @@ async function salvar() {
 document.getElementById('btn-salvar-nfse')?.addEventListener('click', salvar);
 
 requireAuth().then(async (user) => {
-  await loadComponents();
+  await initApp('nfse');
   await setupNavbarAuth(user);
   const cfg = await getConfigNFSe();
   document.getElementById('nfse-codigo').value = cfg.city_service_code || '14.01';

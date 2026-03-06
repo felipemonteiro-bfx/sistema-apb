@@ -9,6 +9,7 @@
   <title>Dashboard - Sistema APB</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>
@@ -19,7 +20,21 @@
       <div class="p-6">
         <div id="messages"></div>
 
-        <h2 class="page-title mb-6">Dashboard</h2>
+        <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <h2 class="page-title">Dashboard</h2>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600">Período:</label>
+            <select id="dashboard-mes" class="form-select py-2 w-36">
+              <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+              <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+              <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+              <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
+            <select id="dashboard-ano" class="form-select py-2 w-24"></select>
+            <button class="btn btn-secondary" id="btn-exportar-csv-dash">Exportar CSV</button>
+            <button class="btn btn-secondary" id="btn-exportar-pdf-dash">Exportar PDF</button>
+          </div>
+        </div>
         <!-- Grid de Cards Principais -->
         <div class="grid-dashboard">
           <div class="stat-card">

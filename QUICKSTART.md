@@ -2,13 +2,13 @@
 
 ## ⚡ Começar em 5 Minutos
 
-### 1️⃣ Preparar Banco de Dados
+### 1️⃣ Preparar Firebase
 
-1. Abra [supabase.com](https://supabase.com) e faça login
-2. Crie um novo projeto (nome: "sistema-apb")
-3. Aguarde inicializar (~1 min)
-4. Vá até **SQL Editor**
-5. Cole o conteúdo de `schema.sql` e execute
+1. Abra [console.firebase.google.com](https://console.firebase.google.com)
+2. Crie um projeto (nome: "sistema-apb")
+3. Ative Firestore e Authentication
+4. Crie as coleções: `clientes`, `chapas`, `servicos`, `custos_servico`, `pagamentos`, `notas_fiscais`, `config`
+5. Veja o guia completo em [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
 
 ### 2️⃣ Configurar Ambiente Local
 
@@ -17,10 +17,8 @@
 cp .env.example .env.local
 ```
 
-Abra `.env.local` e preencha:
-- Vá em **Settings > API** no Supabase
-- Copie `URL` → `VITE_SUPABASE_URL`
-- Copie `anon public` → `VITE_SUPABASE_ANON_KEY`
+Abra `.env.local` e preencha com as credenciais do Firebase (Configurações do Projeto > Sua Apps > Web):
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, etc.
 
 ### 3️⃣ Rodar Projeto
 
@@ -29,7 +27,7 @@ npm install
 npm run dev
 ```
 
-Abra http://localhost:3000 🎉
+Abra http://localhost:3111 🎉 (ou a porta indicada no terminal)
 
 ### 4️⃣ Testar Funcionalidades
 
@@ -42,9 +40,9 @@ Abra http://localhost:3000 🎉
 ## 📦 O que foi Criado
 
 ### Backend
-- ✅ 7 tabelas SQL no Supabase
-- ✅ Relacionamentos e índices otimizados
-- ✅ Cliente JavaScript `supabase.js` com todas as queries
+- ✅ Firestore (NoSQL) com coleções otimizadas
+- ✅ Firebase Auth (e-mail/senha e Google)
+- ✅ Cliente JavaScript `firebase.js` com queries em batch
 
 ### Frontend
 - ✅ 5 páginas HTML + JavaScript
@@ -70,8 +68,10 @@ Abra http://localhost:3000 🎉
 
 ### Deploy (Vercel)
 ```bash
-npm run build  # Gera pasta dist/
-vercel         # Faz deploy
+npm run deploy   # Build + deploy (check + vercel --prod)
+# ou
+npm run check    # Validar build
+vercel --prod    # Deploy manual
 ```
 
 **OU** via GitHub:
@@ -91,8 +91,7 @@ vercel         # Faz deploy
 sistema-apb/
 ├── src/pages/           ← Páginas HTML
 ├── src/js/              ← Lógica JavaScript
-├── src/css/             ← Estilos
-├── schema.sql           ← Script do banco (SQL)
+├── firebase.json        ← Config Firebase
 ├── vite.config.js       ← Config build
 ├── vercel.json          ← Config deploy
 ├── .env.example         ← Variáveis (copiar)
@@ -101,15 +100,15 @@ sistema-apb/
 
 ## 💡 Dicas
 
-- Modifique o imposto em `src/js/utils.js` (linha 3: `TAXA_IMPOSTO = 0.0785`)
-- Estude `src/js/supabase.js` para entender as queries
+- Modifique o imposto nas Configurações ou em `src/js/utils.js`
+- Estude `src/js/firebase.js` para entender as queries
 - Use Chrome DevTools (F12) para debugar
 - Log de erros aparece no console
 
 ## ❓ Dúvidas Frequentes
 
 **P: Dados não aparecem?**
-R: Verifique se o banco foi criado e as env vars estão corretas.
+R: Verifique se o Firebase foi configurado e as variáveis VITE_FIREBASE_* estão corretas em `.env.local`.
 
 **P: Como mudar a taxa de imposto?**
 R: Abra `src/js/utils.js` e mude `TAXA_IMPOSTO` na linha 3.

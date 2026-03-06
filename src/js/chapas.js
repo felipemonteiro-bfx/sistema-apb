@@ -12,37 +12,11 @@ import {
   openModal,
   closeModal,
   setupNavbarAuth,
-  setupSyncIndicator,
-  initSidebarMobile,
-  initTheme,
-  initKeyboardShortcuts,
 } from './utils.js';
-import { loadSearchData, initGlobalSearch } from './search.js';
-import { initAssistente } from './assistente.js';
+import { initApp } from './app-init.js';
 
 let chapas = [];
 let chapaEditando = null;
-
-async function loadComponents() {
-  try {
-    const navbarRes = await fetch('../components/navbar.html');
-    const sidebarRes = await fetch('../components/sidebar.html');
-
-    document.getElementById('navbar-container').innerHTML = await navbarRes.text();
-    document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
-
-    setActiveMenuItem('chapas');
-    initTheme();
-    initKeyboardShortcuts();
-    setupSyncIndicator();
-    initSidebarMobile();
-    initAssistente();
-    loadSearchData();
-    initGlobalSearch();
-  } catch (error) {
-    console.error('Erro ao carregar componentes:', error);
-  }
-}
 
 // Event listeners
 document.getElementById('btn-nova-chapa')?.addEventListener('click', () => {
@@ -126,12 +100,28 @@ function renderChapas() {
           <td>${c.pix || '-'}</td>
           <td>
             <button class="btn btn-secondary btn-sm" onclick="editarChapa('${c.id}')">Editar</button>
+            <button class="btn btn-danger btn-sm ml-1" data-chapa-id="${c.id}" data-chapa-nome="${(c.nome || '').replace(/"/g, '&quot;')}" onclick="desativarChapa(this)">Desativar</button>
           </td>
         </tr>`
     )
     .join('');
 
   window.editarChapa = editarChapa;
+  window.desativarChapa = desativarChapa;
+}
+
+async function desativarChapa(btn) {
+  const id = btn?.getAttribute?.('data-chapa-id');
+  const nome = btn?.getAttribute?.('data-chapa-nome') || 'esta chapa';
+  if (!id) return;
+  if (!confirm(`Desativar a chapa "${nome}"? Ela não aparecerá mais nas listas, mas os dados serão mantidos.`)) return;
+  try {
+    await updateChapa(id, { ativo: false });
+    showSuccess('Chapa desativada.');
+    await loadChapas();
+  } catch (err) {
+    showError('Erro ao desativar: ' + err.message);
+  }
 }
 
 async function editarChapa(id) {
@@ -151,7 +141,7 @@ async function editarChapa(id) {
 
 // Proteger rota e inicializar
 requireAuth().then(async (user) => {
-  await loadComponents();
+  await initApp('chapas');
   await setupNavbarAuth(user);
   const m = document.getElementById('current-month');
   if (m) m.textContent = `Mês: ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;

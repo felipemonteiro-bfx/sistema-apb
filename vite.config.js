@@ -63,6 +63,7 @@ export default defineConfig({
         recibo: 'src/pages/recibo.html',
         nfse: 'src/pages/nfse.html',
         financeiro: 'src/pages/financeiro.html',
+        configuracoes: 'src/pages/configuracoes.html',
       },
     },
   },

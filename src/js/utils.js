@@ -1,4 +1,10 @@
-const TAXA_IMPOSTO = 0.0785; // 7.85%
+let _taxaImpostoCache = 0.0785; // 7.85% - fallback
+
+export const setTaxaImposto = (valor) => {
+  if (valor != null && !isNaN(valor)) _taxaImpostoCache = valor;
+};
+
+export const getTaxaImposto = () => _taxaImpostoCache;
 
 export const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -26,7 +32,7 @@ export const getCurrentMonth = () => {
 };
 
 export const calculateLucro = (valorCobrado, valorCustos) => {
-  const custoComImposto = valorCustos * (1 + TAXA_IMPOSTO);
+  const custoComImposto = valorCustos * (1 + getTaxaImposto());
   const lucro = valorCobrado - custoComImposto;
   const margem = valorCobrado > 0 ? (lucro / valorCobrado) * 100 : 0;
   return { lucro, margem };
@@ -38,6 +44,7 @@ export const getStatusBadge = (status) => {
     executado: { class: 'badge-primary', label: '✓ Executado' },
     faturado: { class: 'badge-primary', label: '📄 Faturado' },
     recebido: { class: 'badge-success', label: '✅ Recebido' },
+    parcialmente_pago: { class: 'badge-warning', label: '💰 Parcial' },
     pendente: { class: 'badge-warning', label: '⏱️ Pendente' },
     atrasado: { class: 'badge-danger', label: '❌ Atrasado' },
   };
@@ -157,18 +164,23 @@ export const calculateDaysOverdue = (dueDate) => {
 };
 
 export const getPaymentStatus = (servicoData) => {
+  const valorTotal = servicoData.valor_total || 0;
+  const totalPago = (servicoData.pagamentos || [])
+    .filter((p) => p.confirmado)
+    .reduce((sum, p) => sum + (p.valor || 0), 0);
+
+  if (totalPago >= valorTotal && valorTotal > 0) return 'recebido';
+  if (totalPago > 0 && totalPago < valorTotal) return 'parcialmente_pago';
+
   if (!servicoData.pagamentos || servicoData.pagamentos.length === 0) {
-    return 'pendente';
+    const dueDate = new Date(servicoData.data_servico);
+    dueDate.setDate(dueDate.getDate() + (servicoData.clientes?.prazo_pagamento || 30));
+    const today = new Date();
+    return today > dueDate ? 'atrasado' : 'pendente';
   }
 
-  const confirmado = servicoData.pagamentos.some((p) => p.confirmado);
-  if (confirmado) return 'recebido';
-
   const dueDate = new Date(servicoData.data_servico);
-  dueDate.setDate(
-    dueDate.getDate() + (servicoData.clientes?.prazo_pagamento || 30)
-  );
-
+  dueDate.setDate(dueDate.getDate() + (servicoData.clientes?.prazo_pagamento || 30));
   const today = new Date();
   return today > dueDate ? 'atrasado' : 'pendente';
 };

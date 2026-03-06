@@ -5,13 +5,8 @@ import {
   showError,
   showSuccess,
   setupNavbarAuth,
-  setupSyncIndicator,
-  initSidebarMobile,
-  initTheme,
-  initKeyboardShortcuts,
 } from './utils.js';
-import { loadSearchData, initGlobalSearch } from './search.js';
-import { initAssistente } from './assistente.js';
+import { initApp } from './app-init.js';
 
 const CHAVES_DISPONIVEIS = [
   { chave: 'cliente', label: 'Nome do cliente' },
@@ -29,26 +24,6 @@ const CHAVES_DISPONIVEIS = [
 ];
 
 let config = null;
-
-async function loadComponents() {
-  try {
-    const navbarRes = await fetch('../components/navbar.html');
-    const sidebarRes = await fetch('../components/sidebar.html');
-    document.getElementById('navbar-container').innerHTML = await navbarRes.text();
-    document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
-
-    setActiveMenuItem('recibo');
-    initTheme();
-    initKeyboardShortcuts();
-    setupSyncIndicator();
-    initSidebarMobile();
-    initAssistente();
-    loadSearchData();
-    initGlobalSearch();
-  } catch (err) {
-    console.error('Erro ao carregar componentes:', err);
-  }
-}
 
 function renderCamposTabela() {
   const container = document.getElementById('campos-tabela-container');
@@ -104,6 +79,8 @@ function coletarFormulario() {
     nome_empresa: document.getElementById('recibo-nome-empresa')?.value?.trim() || 'Sistema APB',
     cabecalho: document.getElementById('recibo-cabecalho')?.value?.trim() || '',
     rodape: document.getElementById('recibo-rodape')?.value?.trim() || 'Obrigado pela preferência.',
+    email_remetente: document.getElementById('recibo-email-remetente')?.value?.trim() || '',
+    nome_remetente: document.getElementById('recibo-nome-remetente')?.value?.trim() || 'Sistema APB',
     campos_tabela: campos.length ? campos : config?.campos_tabela || [],
     assunto_email:
       document.getElementById('recibo-assunto-email')?.value?.trim() ||
@@ -120,6 +97,8 @@ function preencherFormulario(data) {
   document.getElementById('recibo-nome-empresa').value = data.nome_empresa || '';
   document.getElementById('recibo-cabecalho').value = data.cabecalho || '';
   document.getElementById('recibo-rodape').value = data.rodape || '';
+  document.getElementById('recibo-email-remetente').value = data.email_remetente || '';
+  document.getElementById('recibo-nome-remetente').value = data.nome_remetente || 'Sistema APB';
   document.getElementById('recibo-assunto-email').value = data.assunto_email || '';
   document.getElementById('recibo-mensagem-email').value = data.mensagem_email || '';
   renderCamposTabela();
@@ -167,14 +146,14 @@ document.getElementById('btn-add-campo')?.addEventListener('click', () => {
   atualizarPreview();
 });
 
-['recibo-titulo', 'recibo-nome-empresa', 'recibo-cabecalho', 'recibo-rodape', 'recibo-assunto-email', 'recibo-mensagem-email'].forEach(
+['recibo-titulo', 'recibo-nome-empresa', 'recibo-cabecalho', 'recibo-rodape', 'recibo-email-remetente', 'recibo-nome-remetente', 'recibo-assunto-email', 'recibo-mensagem-email'].forEach(
   (id) => {
     document.getElementById(id)?.addEventListener('input', atualizarPreview);
   }
 );
 
 requireAuth().then(async (user) => {
-  await loadComponents();
+  await initApp('recibo');
   await setupNavbarAuth(user);
   config = await getConfigRecibo();
   preencherFormulario(config);

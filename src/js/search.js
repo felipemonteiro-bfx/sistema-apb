@@ -1,19 +1,26 @@
-import { getClientes, getChapas, getServicos } from './firebase.js';
+import { getClientes, getChapas, getServicosParaBusca } from './firebase.js';
 
 let clientesCache = [];
 let chapasCache = [];
 let servicosCache = [];
 let searchTimeout = null;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+let lastLoad = 0;
 
 export async function loadSearchData() {
+  const now = Date.now();
+  if (now - lastLoad < CACHE_TTL_MS && clientesCache.length + chapasCache.length + servicosCache.length > 0) {
+    return;
+  }
   const [c, ch, s] = await Promise.all([
     getClientes().catch(() => []),
     getChapas().catch(() => []),
-    getServicos().catch(() => []),
+    getServicosParaBusca().catch(() => []),
   ]);
   clientesCache = c;
   chapasCache = ch;
   servicosCache = s;
+  lastLoad = now;
 }
 
 function search(term) {
