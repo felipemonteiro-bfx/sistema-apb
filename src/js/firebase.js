@@ -5,12 +5,15 @@ import {
   addDoc,
   updateDoc,
   doc,
+  setDoc,
   getDoc,
   getDocs,
   query,
   where,
   orderBy,
   deleteDoc,
+  onSnapshot,
+  enableIndexedDbPersistence,
 } from 'firebase/firestore';
 import {
   getAuth,
@@ -32,13 +35,37 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-if (!firebaseConfig.projectId) {
-  throw new Error('Missing Firebase configuration. Check .env.local');
+if (!firebaseConfig.projectId || !firebaseConfig.apiKey) {
+  throw new Error('Configure o .env.local com as credenciais do Firebase. Veja FIREBASE_SETUP.md');
 }
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+// Persistência offline
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code === 'failed-precondition') console.warn('Firestore offline: múltiplas abas abertas');
+  else if (err.code === 'unimplemented') console.warn('Firestore offline não suportado');
+});
+
+/** Estado de sincronização. Callback quando muda. */
+let _syncCallbacks = [];
+export const onSyncStatusChange = (callback) => {
+  _syncCallbacks.push(callback);
+  callback(navigator.onLine ? 'sincronizado' : 'offline');
+  return () => { _syncCallbacks = _syncCallbacks.filter((c) => c !== callback); };
+};
+export const getSyncStatus = () => (navigator.onLine ? 'sincronizado' : 'offline');
+
+if (typeof window !== 'undefined') {
+  ['online', 'offline'].forEach((ev) => {
+    window.addEventListener(ev, () => {
+      const status = navigator.onLine ? 'sincronizado' : 'offline';
+      _syncCallbacks.forEach((cb) => cb(status));
+    });
+  });
+}
 
 // === Firebase Auth ===
 export const signInWithEmail = (email, senha) =>
@@ -58,18 +85,9 @@ export const onAuthReady = (callback) => {
   return onAuthStateChanged(auth, callback);
 };
 
-/** Redireciona para login se não autenticado. Retorna Promise que resolve com o user. */
+/** Acesso direto (sem login). Retorna Promise que resolve com user simulado. */
 export const requireAuth = () => {
-  return new Promise((resolve) => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      unsub();
-      if (user) {
-        resolve(user);
-      } else {
-        window.location.href = '/src/pages/login.html';
-      }
-    });
-  });
+  return Promise.resolve({ email: 'Acesso direto' });
 };
 
 // Clientes
@@ -80,7 +98,20 @@ export const getClientes = async () => {
     orderBy('nome')
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+/** Inscreve para atualizações em tempo real de clientes. Retorna função para cancelar. */
+export const subscribeClientes = (callback) => {
+  const q = query(
+    collection(db, 'clientes'),
+    where('ativo', '==', true),
+    orderBy('nome')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    callback(data);
+  });
 };
 
 export const insertCliente = async (cliente) => {
@@ -104,7 +135,19 @@ export const getChapas = async () => {
     orderBy('nome')
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+/** Inscreve para atualizações em tempo real de chapas. Retorna função para cancelar. */
+export const subscribeChapas = (callback) => {
+  const q = query(
+    collection(db, 'chapas'),
+    where('ativo', '==', true),
+    orderBy('nome')
+  );
+  return onSnapshot(q, (snapshot) => {
+    callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
 };
 
 export const insertChapa = async (chapa) => {
@@ -156,6 +199,30 @@ export const getServicos = async () => {
   }
 
   return servicos;
+};
+
+async function enrichServicos(servicos) {
+  for (const servico of servicos) {
+    if (servico.cliente_id) {
+      const clienteSnap = await getDoc(doc(db, 'clientes', servico.cliente_id));
+      if (clienteSnap.exists()) servico.clientes = { id: clienteSnap.id, ...clienteSnap.data() };
+    }
+    const custosSnap = await getDocs(query(collection(db, 'custos_servico'), where('servico_id', '==', servico.id)));
+    servico.custos_servico = custosSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const pagSnap = await getDocs(query(collection(db, 'pagamentos'), where('servico_id', '==', servico.id)));
+    servico.pagamentos = pagSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }
+  return servicos;
+}
+
+/** Inscreve para atualizações em tempo real de serviços. Retorna função para cancelar. */
+export const subscribeServicos = (callback) => {
+  const q = query(collection(db, 'servicos'), orderBy('data_servico', 'desc'));
+  return onSnapshot(q, async (snapshot) => {
+    const servicos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const enriched = await enrichServicos(servicos);
+    callback(enriched);
+  });
 };
 
 export const insertServico = async (servico) => {
@@ -272,9 +339,8 @@ export const getContasReceber = async () => {
     orderBy('data_servico')
   );
   const snapshot = await getDocs(q);
-  const servicos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const servicos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  // Enriquecer com cliente e pagamentos
   for (const servico of servicos) {
     if (servico.cliente_id) {
       const clienteSnap = await getDoc(doc(db, 'clientes', servico.cliente_id));
@@ -286,11 +352,87 @@ export const getContasReceber = async () => {
     const pagamentosSnapshot = await getDocs(
       query(collection(db, 'pagamentos'), where('servico_id', '==', servico.id))
     );
-    servico.pagamentos = pagamentosSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    servico.pagamentos = pagamentosSnapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
 
   return servicos;
 };
+
+/** Inscreve para contas a receber em tempo real. Retorna função para cancelar. */
+export const subscribeContasReceber = (callback) => {
+  const q = query(
+    collection(db, 'servicos'),
+    where('status', '!=', 'recebido'),
+    orderBy('status'),
+    orderBy('data_servico')
+  );
+  return onSnapshot(q, async (snapshot) => {
+    const servicos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    for (const s of servicos) {
+      if (s.cliente_id) {
+        const cs = await getDoc(doc(db, 'clientes', s.cliente_id));
+        if (cs.exists()) s.clientes = { id: cs.id, ...cs.data() };
+      }
+      const ps = await getDocs(query(collection(db, 'pagamentos'), where('servico_id', '==', s.id)));
+      s.pagamentos = ps.docs.map((d) => ({ id: d.id, ...d.data() }));
+    }
+    callback(servicos);
+  });
+};
+
+// Config Recibo (template de recibo)
+const CONFIG_RECIBO_ID = 'recibo';
+export const getConfigRecibo = async () => {
+  const snap = await getDoc(doc(db, 'config', CONFIG_RECIBO_ID));
+  if (!snap.exists()) return getConfigReciboDefaults();
+  return { id: snap.id, ...snap.data() };
+};
+
+export const saveConfigRecibo = async (data) => {
+  await setDoc(doc(db, 'config', CONFIG_RECIBO_ID), { ...data, updated_at: new Date() }, { merge: true });
+};
+
+// Config NFS-e (Manaus-AM)
+const CONFIG_NFSE_ID = 'nfse';
+export const getConfigNFSe = async () => {
+  const snap = await getDoc(doc(db, 'config', CONFIG_NFSE_ID));
+  if (!snap.exists()) return getConfigNFSeDefaults();
+  return { id: snap.id, ...snap.data() };
+};
+
+export const saveConfigNFSe = async (data) => {
+  await setDoc(doc(db, 'config', CONFIG_NFSE_ID), { ...data, updated_at: new Date() }, { merge: true });
+};
+
+function getConfigNFSeDefaults() {
+  return {
+    habilitado: false,
+    city_service_code: '14.01', // Manaus - Código Lei 714 (ex: serviços de carga/descarga)
+    descricao_padrao: 'Serviço de carregamento e descarregamento de chapas',
+    iss_rate: 2,
+    municipio_ibge: '1302603',
+    municipio_nome: 'Manaus',
+    estado: 'AM',
+  };
+}
+
+function getConfigReciboDefaults() {
+  return {
+    titulo: 'Recibo de Serviço',
+    nome_empresa: 'Sistema APB',
+    cabecalho: '',
+    rodape: 'Obrigado pela preferência.',
+    campos_tabela: [
+      { label: 'Cliente', chave: 'cliente' },
+      { label: 'Data', chave: 'data' },
+      { label: 'Carreta', chave: 'carreta' },
+      { label: 'Contêiner', chave: 'conteiner' },
+      { label: 'Transportadora', chave: 'transportadora' },
+      { label: 'Local', chave: 'local' },
+      { label: 'Chapas', chave: 'chapas' },
+      { label: 'Valor Total', chave: 'valor_total' },
+    ],
+    mensagem_email: 'Prezado(a) {{cliente}},\n\nSegue o recibo do serviço realizado em {{data}}.\n\nValor total: {{valor}}\n\nAtenciosamente.',
+    assunto_email: 'Recibo - {{cliente}} - {{data}}',
+  };
+}

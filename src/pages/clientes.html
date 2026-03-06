@@ -2,9 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e3a5f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Clientes - Sistema APB</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>
@@ -15,9 +18,24 @@
       <div class="p-6">
         <div id="messages"></div>
 
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold">Clientes / Transportadoras</h2>
-          <button class="btn btn-primary" id="btn-novo-cliente">+ Novo Cliente</button>
+        <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <h2 class="page-title">Clientes / Transportadoras</h2>
+          <div class="flex gap-2">
+            <input type="text" id="filter-cliente-nome" class="form-input py-2 w-48" placeholder="Filtrar por nome..." />
+            <button class="btn btn-primary" id="btn-novo-cliente">+ Novo Cliente</button>
+          </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div class="card">
+            <div class="card-header">Clientes por Necessidade de Nota</div>
+            <canvas id="chartNotaFiscal" height="180"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header">Valor por Chapa (Top Clientes)</div>
+            <canvas id="chartValorChapa" height="180"></canvas>
+          </div>
         </div>
 
         <div class="card">
@@ -34,6 +52,7 @@
                   <th>Estado</th>
                   <th>Valor/Chapa</th>
                   <th>Prazo (dias)</th>
+                  <th>Precisa NF</th>
                   <th>Ações</th>
                 </tr>
               </thead>
@@ -76,6 +95,13 @@
         <div class="form-group">
           <label class="form-label">Prazo de Pagamento (dias)</label>
           <input type="number" class="form-input" id="cliente-prazo" value="30" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Precisa de Nota Fiscal?</label>
+          <select class="form-select" id="cliente-precisa-nota">
+            <option value="sim">Sim</option>
+            <option value="nao" selected>Não</option>
+          </select>
         </div>
         <div class="form-group">
           <label class="form-label">Endereço</label>

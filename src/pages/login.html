@@ -4,15 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - Sistema APB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../css/styles.css" />
+  <style>body{font-family:'Plus Jakarta Sans',system-ui,sans-serif}</style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-  <div class="w-full max-w-md">
-    <div class="bg-white/95 backdrop-blur rounded-2xl shadow-2xl p-8">
+<body class="login-page min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+  <!-- Imagem de fundo - logística/armazém, 40% de opacidade -->
+  <div class="login-bg-image absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('/bg-login.png'); opacity: 0.4;"></div>
+  <!-- Overlay escuro para manter legibilidade do formulário -->
+  <div class="absolute inset-0 bg-gradient-to-br from-slate-900/85 via-blue-900/80 to-slate-900/85"></div>
+  <div class="relative z-10 w-full max-w-md">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 border border-slate-200/50">
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">Sistema APB</h1>
-        <p class="text-gray-600 mt-1">Entre para continuar</p>
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white text-xl mx-auto mb-4 shadow-lg">A</div>
+        <h1 class="text-2xl font-bold text-slate-800">Sistema APB</h1>
+        <p class="text-slate-500 mt-1">Entre para continuar</p>
       </div>
 
       <div id="login-message" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
@@ -53,7 +61,7 @@
         <button
           type="submit"
           id="btn-login"
-          class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+          class="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 text-white font-semibold rounded-xl transition shadow-md"
         >
           Entrar
         </button>
@@ -62,6 +70,8 @@
           <button type="button" id="toggle-criar-conta" class="text-blue-600 hover:underline">
             Criar conta
           </button>
+          ou
+          <a href="/src/pages/criar-admin.html" class="text-blue-600 hover:underline">Criar admin</a>
         </p>
       </form>
 
@@ -88,7 +98,7 @@
         Entrar com Google
       </button>
     </div>
-    <p class="text-center text-white/80 text-sm mt-4">Sistema de gestão de serviços</p>
+    <p class="text-center text-white/80 text-sm mt-4 relative z-10">Gestão de clientes, chapas e serviços — Manaus</p>
   </div>
 
   <script type="module" src="../js/login.js"></script>

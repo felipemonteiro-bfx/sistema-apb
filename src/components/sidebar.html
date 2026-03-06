@@ -1,22 +1,26 @@
-<aside class="sidebar">
-  <div class="mb-8">
-    <h2 class="text-white font-bold text-lg">APB</h2>
+<button id="sidebar-toggle" class="sidebar-toggle md:hidden fixed top-4 left-4 z-30 p-2.5 rounded-xl bg-white shadow-lg border border-slate-200" aria-label="Menu">
+  <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+  </svg>
+</button>
+<div id="sidebar-overlay" class="sidebar-overlay hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"></div>
+<aside id="sidebar" class="sidebar">
+  <div class="flex justify-between items-center mb-8">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center font-bold text-white text-sm shadow-md">A</div>
+      <span class="font-bold text-slate-100 text-base tracking-tight">Sistema APB</span>
+    </div>
+    <button id="sidebar-close" class="md:hidden p-2 -mr-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition" aria-label="Fechar">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
   </div>
-  <nav class="space-y-2">
-    <a href="/src/pages/index.html" class="sidebar-link active" data-page="dashboard">
-      📊 Dashboard
-    </a>
-    <a href="/src/pages/clientes.html" class="sidebar-link" data-page="clientes">
-      🚚 Clientes
-    </a>
-    <a href="/src/pages/chapas.html" class="sidebar-link" data-page="chapas">
-      👤 Chapas
-    </a>
-    <a href="/src/pages/servicos.html" class="sidebar-link" data-page="servicos">
-      📋 Serviços
-    </a>
-    <a href="/src/pages/financeiro.html" class="sidebar-link" data-page="financeiro">
-      💰 Financeiro
-    </a>
+  <nav class="space-y-0.5">
+    <a href="/src/pages/index.html" class="sidebar-link active" data-page="dashboard">📊 Dashboard</a>
+    <a href="/src/pages/clientes.html" class="sidebar-link" data-page="clientes">🚚 Clientes</a>
+    <a href="/src/pages/chapas.html" class="sidebar-link" data-page="chapas">👤 Chapas</a>
+    <a href="/src/pages/servicos.html" class="sidebar-link" data-page="servicos">📋 Serviços</a>
+    <a href="/src/pages/recibo.html" class="sidebar-link" data-page="recibo">🧾 Recibo</a>
+    <a href="/src/pages/nfse.html" class="sidebar-link" data-page="nfse">📄 NFS-e</a>
+    <a href="/src/pages/financeiro.html" class="sidebar-link" data-page="financeiro">💰 Financeiro</a>
   </nav>
 </aside>

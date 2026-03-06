@@ -2,7 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e3a5f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Serviços - Sistema APB</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../css/styles.css" />
@@ -15,9 +17,39 @@
       <div class="p-6">
         <div id="messages"></div>
 
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold">Registro de Serviços</h2>
+        <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <h2 class="page-title">Registro de Serviços</h2>
           <button class="btn btn-primary" id="btn-novo-servico">+ Novo Serviço</button>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header text-base">Filtros</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="form-group mb-0">
+              <label class="form-label text-xs">Data inicial</label>
+              <input type="date" id="filter-data-inicio" class="form-input py-2" />
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label text-xs">Data final</label>
+              <input type="date" id="filter-data-fim" class="form-input py-2" />
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label text-xs">Cliente</label>
+              <select id="filter-cliente" class="form-select py-2">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label text-xs">Status</label>
+              <select id="filter-status" class="form-select py-2">
+                <option value="">Todos</option>
+                <option value="agendado">Agendado</option>
+                <option value="executado">Executado</option>
+                <option value="faturado">Faturado</option>
+                <option value="recebido">Recebido</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div class="card">
@@ -27,6 +59,9 @@
                 <tr>
                   <th>Data</th>
                   <th>Cliente</th>
+                  <th>Carreta</th>
+                  <th>Contêiner</th>
+                  <th>Transportadora</th>
                   <th>Local</th>
                   <th>Chapas</th>
                   <th>Valor Total</th>
@@ -46,7 +81,7 @@
 
   <!-- Modal de Serviço -->
   <div id="modal-servico" class="modal">
-    <div class="modal-content max-w-2xl">
+    <div class="modal-content max-w-2xl max-h-[90vh] overflow-y-auto">
       <div class="modal-header">
         <span>Novo Serviço</span>
         <button class="float-right text-2xl leading-none cursor-pointer" id="btn-fechar-modal">×</button>
@@ -59,21 +94,74 @@
           </div>
           <div class="form-group">
             <label class="form-label">Cliente</label>
-            <select class="form-select" id="servico-cliente" required></select>
+            <select class="form-select" id="servico-cliente">
+              <option value="">— Selecionar —</option>
+            </select>
           </div>
+        </div>
+
+        <div class="border-t pt-4 mt-2">
+          <h3 class="font-semibold mb-3 text-gray-700">Identificação do Serviço</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="form-group">
+              <label class="form-label">Carreta</label>
+              <input type="text" class="form-input" id="servico-carreta" placeholder="Placa ou identificação" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contêiner</label>
+              <input type="text" class="form-input" id="servico-conteiner" placeholder="Número do contêiner" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">NFe n.</label>
+              <input type="text" class="form-input" id="servico-nfe" placeholder="Número da NFe" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">CTE</label>
+              <input type="text" class="form-input" id="servico-cte" placeholder="Número do CTE" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Transportadora</label>
+              <input type="text" class="form-input" id="servico-transportadora" placeholder="Nome da transportadora" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fornecedor</label>
+              <input type="text" class="form-input" id="servico-fornecedor" placeholder="Nome do fornecedor" />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-4">
           <div class="form-group">
             <label class="form-label">Quantidade de Chapas</label>
-            <input type="number" class="form-input" id="servico-quantidade" min="1" required />
+            <input type="number" class="form-input" id="servico-quantidade" min="0" placeholder="0" />
           </div>
           <div class="form-group">
             <label class="form-label">Valor por Chapa</label>
-            <input type="number" class="form-input" id="servico-valor" step="0.01" required />
+            <input type="number" class="form-input" id="servico-valor" step="0.01" min="0" placeholder="0" />
+          </div>
+        </div>
+
+        <div class="border-t pt-4 mt-2">
+          <h3 class="font-semibold mb-3 text-gray-700">Stretch e Matrin</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="form-group">
+              <label class="form-label">Stretch - Quantidade</label>
+              <input type="number" class="form-input" id="servico-stretch-quantidade" min="0" placeholder="0" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stretch - Valor (R$)</label>
+              <input type="number" class="form-input" id="servico-stretch-valor" step="0.01" min="0" placeholder="0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Matrin - Valor (R$)</label>
+              <input type="number" class="form-input" id="servico-matrin-valor" step="0.01" min="0" placeholder="0" />
+            </div>
           </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">Valor Total</label>
-          <input type="number" class="form-input" id="servico-total" disabled step="0.01" />
+          <input type="number" class="form-input" id="servico-total" step="0.01" placeholder="0" />
         </div>
 
         <div class="form-group">
@@ -94,6 +182,18 @@
         <div class="form-group">
           <label class="form-label">Observações</label>
           <textarea class="form-textarea" id="servico-obs" rows="3"></textarea>
+        </div>
+
+        <!-- Exportar NFS-e e Enviar Recibo -->
+        <div class="border-t pt-4 mt-4">
+          <h3 class="font-semibold mb-2">NFS-e e Recibo</h3>
+          <p class="text-sm text-gray-600 mb-2">Exporte os dados para NFS-e ou envie o recibo por email ao cliente.</p>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-emitir-nfse">Emitir NFS-e</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-exportar-nfse">Exportar dados (manual)</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-visualizar-recibo">Visualizar / Imprimir recibo</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-enviar-recibo">Enviar recibo por email</button>
+          </div>
         </div>
 
         <!-- Notas Fiscais (visível ao editar) -->
@@ -127,6 +227,39 @@
           <button type="submit" class="btn btn-primary">Salvar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Enviar Recibo por Email -->
+  <div id="modal-recibo-email" class="modal">
+    <div class="modal-content max-w-lg">
+      <div class="modal-header">
+        <span>Enviar recibo por email</span>
+        <button type="button" class="float-right text-2xl leading-none cursor-pointer" id="btn-fechar-modal-recibo">×</button>
+      </div>
+      <div class="p-4">
+        <div class="form-group">
+          <label class="form-label">Email do destinatário</label>
+          <input type="email" class="form-input" id="recibo-email" placeholder="cliente@exemplo.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assunto</label>
+          <input type="text" class="form-input" id="recibo-assunto" placeholder="Recibo - Serviço realizado" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mensagem personalizada</label>
+          <textarea class="form-textarea" id="recibo-mensagem" rows="4" placeholder="Prezado cliente,
+
+Segue o recibo do serviço realizado.
+
+Placeholders: {{cliente}}, {{valor}}, {{data}}, {{carreta}}, {{conteiner}}"></textarea>
+          <p class="text-xs text-gray-500 mt-1">Use {{cliente}}, {{valor}}, {{data}}, {{carreta}}, {{conteiner}} para personalizar.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancelar-recibo">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btn-confirmar-envio">Enviar</button>
+        </div>
+      </div>
     </div>
   </div>
 

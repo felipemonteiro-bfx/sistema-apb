@@ -1,5 +1,5 @@
 import {
-  getChapas,
+  subscribeChapas,
   insertChapa,
   updateChapa,
   requireAuth,
@@ -12,12 +12,16 @@ import {
   openModal,
   closeModal,
   setupNavbarAuth,
+  setupSyncIndicator,
+  initSidebarMobile,
+  initTheme,
+  initKeyboardShortcuts,
 } from './utils.js';
+import { loadSearchData, initGlobalSearch } from './search.js';
+import { initAssistente } from './assistente.js';
 
 let chapas = [];
 let chapaEditando = null;
-
-document.getElementById('current-month').textContent = `Mês: ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
 
 async function loadComponents() {
   try {
@@ -28,6 +32,13 @@ async function loadComponents() {
     document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
 
     setActiveMenuItem('chapas');
+    initTheme();
+    initKeyboardShortcuts();
+    setupSyncIndicator();
+    initSidebarMobile();
+    initAssistente();
+    loadSearchData();
+    initGlobalSearch();
   } catch (error) {
     console.error('Erro ao carregar componentes:', error);
   }
@@ -86,14 +97,11 @@ async function handleSaveChapa(e) {
   }
 }
 
-async function loadChapas() {
-  try {
-    chapas = await getChapas();
+function loadChapas() {
+  subscribeChapas((data) => {
+    chapas = data;
     renderChapas();
-  } catch (error) {
-    console.error('Erro ao carregar chapas:', error);
-    showError('Erro ao carregar chapas');
-  }
+  });
 }
 
 function renderChapas() {
@@ -145,5 +153,7 @@ async function editarChapa(id) {
 requireAuth().then(async (user) => {
   await loadComponents();
   await setupNavbarAuth(user);
+  const m = document.getElementById('current-month');
+  if (m) m.textContent = `Mês: ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
   loadChapas();
 });

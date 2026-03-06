@@ -1,5 +1,5 @@
 import {
-  getClientes,
+  subscribeClientes,
   insertCliente,
   updateCliente,
   requireAuth,
@@ -12,12 +12,16 @@ import {
   openModal,
   closeModal,
   setupNavbarAuth,
+  setupSyncIndicator,
+  initSidebarMobile,
+  initTheme,
+  initKeyboardShortcuts,
 } from './utils.js';
+import { loadSearchData, initGlobalSearch } from './search.js';
+import { initAssistente } from './assistente.js';
 
 let clientes = [];
 let clienteEditando = null;
-
-document.getElementById('current-month').textContent = `Mês: ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
 
 async function loadComponents() {
   try {
@@ -28,6 +32,13 @@ async function loadComponents() {
     document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
 
     setActiveMenuItem('clientes');
+    initTheme();
+    initKeyboardShortcuts();
+    setupSyncIndicator();
+    initSidebarMobile();
+    initAssistente();
+    loadSearchData();
+    initGlobalSearch();
   } catch (error) {
     console.error('Erro ao carregar componentes:', error);
   }
@@ -70,6 +81,7 @@ async function handleSaveCliente(e) {
     estado: document.getElementById('cliente-estado').value.trim().toUpperCase() || null,
     valor_padrao_chapa: parseFloat(document.getElementById('cliente-valor').value) || 0,
     prazo_pagamento: parseInt(document.getElementById('cliente-prazo').value) || 30,
+    precisa_nota: document.getElementById('cliente-precisa-nota').value,
     ativo: true,
   };
 
@@ -90,27 +102,38 @@ async function handleSaveCliente(e) {
   }
 }
 
-async function loadClientes() {
-  try {
-    clientes = await getClientes();
+function loadClientes() {
+  subscribeClientes((data) => {
+    clientes = data;
     renderClientes();
-  } catch (error) {
-    console.error('Erro ao carregar clientes:', error);
-    showError('Erro ao carregar clientes');
-  }
+  });
 }
 
+function getFilteredClientes() {
+  const q = document.getElementById('filter-cliente-nome')?.value?.toLowerCase().trim() || '';
+  if (!q) return clientes;
+  return clientes.filter((c) => (c.nome || '').toLowerCase().includes(q));
+}
+
+let filterClientesBound = false;
 function renderClientes() {
   const tbody = document.getElementById('clientes-tbody');
   if (!tbody) return;
 
-  if (clientes.length === 0) {
+  if (!filterClientesBound) {
+    document.getElementById('filter-cliente-nome')?.addEventListener('input', () => renderClientes());
+    filterClientesBound = true;
+  }
+
+  const filtered = getFilteredClientes();
+  if (filtered.length === 0) {
     tbody.innerHTML =
-      '<tr><td colspan="10" class="text-center text-gray-500 py-4">Nenhum cliente cadastrado</td></tr>';
+      '<tr><td colspan="11" class="text-center text-gray-500 py-4">Nenhum cliente cadastrado</td></tr>';
+    renderCharts({ notaSim: 0, notaNao: 0 }, []);
     return;
   }
 
-  tbody.innerHTML = clientes
+  tbody.innerHTML = filtered
     .map(
       (c) =>
         `<tr>
@@ -123,6 +146,7 @@ function renderClientes() {
           <td>${c.estado || '-'}</td>
           <td>${formatCurrency(c.valor_padrao_chapa)}</td>
           <td>${c.prazo_pagamento} dias</td>
+          <td>${(c.precisa_nota || 'nao') === 'sim' ? '✓ Sim' : '— Não'}</td>
           <td>
             <button class="btn btn-secondary btn-sm" onclick="editarCliente('${c.id}')">Editar</button>
           </td>
@@ -130,8 +154,75 @@ function renderClientes() {
     )
     .join('');
 
+  const notaSim = clientes.filter((c) => (c.precisa_nota || 'nao') === 'sim').length;
+  const notaNao = clientes.length - notaSim;
+  const topValores = clientes
+    .sort((a, b) => (b.valor_padrao_chapa || 0) - (a.valor_padrao_chapa || 0))
+    .slice(0, 5);
+  renderCharts({ notaSim, notaNao }, topValores);
+
   // Make editarCliente available globally
   window.editarCliente = editarCliente;
+}
+
+let chartNotaFiscal = null;
+let chartValorChapa = null;
+
+function renderCharts(notaData, topValores) {
+  const ctxNota = document.getElementById('chartNotaFiscal')?.getContext('2d');
+  if (ctxNota) {
+    if (chartNotaFiscal) chartNotaFiscal.destroy();
+    chartNotaFiscal = new Chart(ctxNota, {
+      type: 'doughnut',
+      data: {
+        labels: ['Precisa de NF', 'Não precisa de NF'],
+        datasets: [
+          {
+            data: [notaData.notaSim, notaData.notaNao],
+            backgroundColor: ['#3b82f6', '#94a3b8'],
+            borderColor: ['#2563eb', '#64748b'],
+            borderWidth: 2,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+        },
+      },
+    });
+  }
+
+  const ctxValor = document.getElementById('chartValorChapa')?.getContext('2d');
+  if (ctxValor) {
+    if (chartValorChapa) chartValorChapa.destroy();
+    chartValorChapa = new Chart(ctxValor, {
+      type: 'bar',
+      data: {
+        labels: topValores.map((c) => c.nome?.substring(0, 15) || ''),
+        datasets: [
+          {
+            label: 'Valor por Chapa (R$)',
+            data: topValores.map((c) => c.valor_padrao_chapa || 0),
+            backgroundColor: 'rgba(30, 58, 95, 0.8)',
+            borderColor: '#1e3a5f',
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: (v) => 'R$ ' + v.toLocaleString('pt-BR') },
+          },
+        },
+      },
+    });
+  }
 }
 
 async function editarCliente(id) {
@@ -145,6 +236,7 @@ async function editarCliente(id) {
   document.getElementById('cliente-email').value = cliente.email || '';
   document.getElementById('cliente-valor').value = cliente.valor_padrao_chapa;
   document.getElementById('cliente-prazo').value = cliente.prazo_pagamento;
+  document.getElementById('cliente-precisa-nota').value = cliente.precisa_nota || 'nao';
   document.getElementById('cliente-endereco').value = cliente.endereco || '';
   document.getElementById('cliente-cidade').value = cliente.cidade || '';
   document.getElementById('cliente-estado').value = cliente.estado || '';
@@ -157,5 +249,7 @@ async function editarCliente(id) {
 requireAuth().then(async (user) => {
   await loadComponents();
   await setupNavbarAuth(user);
+  const m = document.getElementById('current-month');
+  if (m) m.textContent = `Mês: ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
   loadClientes();
 });

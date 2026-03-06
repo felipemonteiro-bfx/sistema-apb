@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e3a5f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Modelo de Recibo - Sistema APB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="container-main">
+    <div id="sidebar-container"></div>
+    <div class="main-content w-full">
+      <div id="navbar-container"></div>
+      <div class="p-6">
+        <div id="messages"></div>
+
+        <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <h2 class="page-title">Modelo de Recibo</h2>
+          <button type="button" class="btn btn-primary" id="btn-salvar-recibo">Salvar modelo</button>
+        </div>
+
+        <p class="text-gray-600 mb-6">
+          Configure os campos padrões e os campos variáveis do recibo. Ao registrar um serviço, o recibo será gerado automaticamente com base neste modelo.
+        </p>
+
+        <div class="card mb-6">
+          <div class="card-header">Campos padrões (fixos em todos os recibos)</div>
+          <div class="space-y-4">
+            <div class="form-group">
+              <label class="form-label">Título do recibo</label>
+              <input type="text" class="form-input" id="recibo-titulo" placeholder="Recibo de Serviço" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nome da empresa</label>
+              <input type="text" class="form-input" id="recibo-nome-empresa" placeholder="Sistema APB" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cabeçalho (texto opcional acima da tabela)</label>
+              <textarea class="form-textarea" id="recibo-cabecalho" rows="2" placeholder="Ex: Serviço de carregamento e descarregamento de chapas"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Rodapé</label>
+              <input type="text" class="form-input" id="recibo-rodape" placeholder="Obrigado pela preferência." />
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-6">
+          <div class="card-header">Campos da tabela (variam conforme o serviço)</div>
+          <p class="text-sm text-gray-600 mb-4">Adicione, remova ou reordene as linhas que aparecem no recibo. A chave define de onde virá o dado.</p>
+          <div id="campos-tabela-container"></div>
+          <button type="button" class="btn btn-secondary btn-sm mt-2" id="btn-add-campo">+ Adicionar campo</button>
+        </div>
+
+        <div class="card mb-6">
+          <div class="card-header">Email (modelo de envio)</div>
+          <div class="space-y-4">
+            <div class="form-group">
+              <label class="form-label">Assunto do email</label>
+              <input type="text" class="form-input" id="recibo-assunto-email" placeholder="Recibo - {{cliente}} - {{data}}" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mensagem do email</label>
+              <textarea class="form-textarea" id="recibo-mensagem-email" rows="5" placeholder="Prezado(a) {{cliente}}, ..."></textarea>
+              <p class="text-xs text-gray-500 mt-1">Placeholders: {{cliente}}, {{valor}}, {{data}}, {{carreta}}, {{conteiner}}, {{transportadora}}, {{local}}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Pré-visualização</div>
+          <div id="recibo-preview" class="p-4 bg-gray-50 rounded-lg border text-sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/recibo.js"></script>
+</body>
+</html>

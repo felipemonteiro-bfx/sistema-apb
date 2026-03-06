@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Criar Admin - Sistema APB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">Criar conta Admin</h1>
+    <p class="text-gray-600 text-sm mb-6">Use esta página uma vez para criar o primeiro usuário administrador.</p>
+
+    <div id="message" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
+
+    <form id="form-admin" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail do Admin</label>
+        <input type="email" id="admin-email" class="form-input" value="admin@sistemaapb.com" required />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+        <input type="password" id="admin-senha" class="form-input" value="Admin@123456" required minlength="6" />
+        <p class="text-xs text-gray-500 mt-1">Mínimo 6 caracteres. Recomendado: altere após o primeiro acesso.</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+        <input type="password" id="admin-confirm" class="form-input" value="Admin@123456" required />
+      </div>
+      <button type="submit" class="btn btn-primary w-full">Criar conta Admin</button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-gray-500">
+      <a href="/src/pages/login.html" class="text-blue-600 hover:underline">← Voltar ao Login</a>
+    </p>
+  </div>
+
+  <script type="module">
+    import { createUser } from '../js/firebase.js';
+
+    const form = document.getElementById('form-admin');
+    const msg = document.getElementById('message');
+
+    function showMsg(text, isError = false) {
+      msg.textContent = text;
+      msg.className = `mb-4 p-3 rounded-lg text-sm ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+      msg.classList.remove('hidden');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('admin-email').value.trim();
+      const senha = document.getElementById('admin-senha').value;
+      const confirm = document.getElementById('admin-confirm').value;
+
+      if (senha !== confirm) {
+        showMsg('As senhas não coincidem.', true);
+        return;
+      }
+      if (senha.length < 6) {
+        showMsg('A senha deve ter pelo menos 6 caracteres.', true);
+        return;
+      }
+
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Criando...';
+
+      try {
+        await createUser(email, senha);
+        showMsg('Conta admin criada! Redirecionando para o login...');
+        setTimeout(() => {
+          window.location.href = '/src/pages/login.html';
+        }, 1500);
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Criar conta Admin';
+        let txt;
+        if (err.code === 'auth/api-key-not-valid') {
+          txt = 'Chave da API inválida. Reinicie o servidor (npm run dev) e verifique .env.local.';
+        } else if (err.code === 'auth/configuration-not-found') {
+          txt = 'Firebase Auth não configurado. No Firebase Console → Authentication → Sign-in method, ative "E-mail/senha" e salve.';
+        } else if (err.code === 'auth/email-already-in-use') {
+          txt = 'Este e-mail já está em uso. Use outro ou faça login.';
+        } else {
+          txt = err.message;
+        }
+        showMsg(txt, true);
+      }
+    });
+  </script>
+</body>
+</html>

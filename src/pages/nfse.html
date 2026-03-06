@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e3a5f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>NFS-e Manaus - Sistema APB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="container-main">
+    <div id="sidebar-container"></div>
+    <div class="main-content w-full">
+      <div id="navbar-container"></div>
+      <div class="p-6">
+        <div id="messages"></div>
+
+        <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <h2 class="page-title">NFS-e Manaus (AM)</h2>
+          <button type="button" class="btn btn-primary" id="btn-salvar-nfse">Salvar configuração</button>
+        </div>
+
+        <div class="card mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <h3 class="font-semibold text-amber-800 mb-2">Configuração necessária</h3>
+          <p class="text-sm text-amber-800 mb-2">
+            A emissão automática usa a API da <strong>NFE.io</strong>. Para ativar:
+          </p>
+          <ol class="list-decimal list-inside text-sm text-amber-800 space-y-1">
+            <li>Cadastre-se em <a href="https://app.nfe.io" target="_blank" class="underline">app.nfe.io</a></li>
+            <li>Cadastre sua empresa e faça upload do certificado digital A1</li>
+            <li>Credencie-se na Prefeitura de Manaus (Nota Manaus)</li>
+            <li>Obtenha a chave de API e o ID da empresa na NFE.io</li>
+            <li>Configure no Firebase: Functions &rarr; emitirNFSe &rarr; Variáveis de ambiente &rarr; <code>NFE_IO_API_KEY</code>, <code>NFE_IO_COMPANY_ID</code></li>
+          </ol>
+          <p class="text-sm text-amber-800 mt-2">
+            <a href="https://nota.manaus.am.gov.br" target="_blank" class="underline">Portal Nota Manaus</a> &bull;
+            <a href="https://nfe.io/docs/prefeituras-integradas/amazonas/manaus-am-1302603/" target="_blank" class="underline">Documentação NFE.io Manaus</a>
+          </p>
+        </div>
+
+        <div class="card mb-6">
+          <div class="card-header">Parâmetros de emissão (Manaus)</div>
+          <div class="space-y-4">
+            <div class="form-group">
+              <label class="form-label">Código do serviço municipal (Lei 714)</label>
+              <input type="text" class="form-input" id="nfse-codigo" placeholder="14.01 ou 1.06.1" />
+              <p class="text-xs text-gray-500 mt-1">Consulte a <a href="https://nota.manaus.am.gov.br/pagina-inicial/acesse-aqui-a-lista-de-servicos-e-suas-aliquotas/141" target="_blank" class="underline">lista de serviços Manaus</a></p>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Alíquota ISS (%)</label>
+              <input type="number" class="form-input" id="nfse-iss" step="0.01" min="0" max="5" placeholder="2" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Descrição padrão do serviço</label>
+              <input type="text" class="form-input" id="nfse-descricao" placeholder="Serviço de carregamento e descarregamento de chapas" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/nfse.js"></script>
+</body>
+</html>

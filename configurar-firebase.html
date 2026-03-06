@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurar Firebase - Sistema APB</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui; max-width: 700px; margin: 0 auto; padding: 24px; line-height: 1.6; }
+    h1 { color: #1a73e8; }
+    .btn { display: inline-block; padding: 14px 24px; background: #1a73e8; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 8px 8px 8px 0; }
+    .btn:hover { background: #1557b0; }
+    .btn-secondary { background: #5f6368; }
+    .btn-secondary:hover { background: #4a4d51; }
+    pre { background: #f1f3f4; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    .step { margin: 24px 0; padding: 16px; border-left: 4px solid #1a73e8; background: #f8f9fa; border-radius: 0 8px 8px 0; }
+    code { background: #e8eaed; padding: 2px 6px; border-radius: 4px; }
+    ul { margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <h1>Configurar credenciais do Firebase</h1>
+  <p>Siga os passos abaixo para corrigir o erro <strong>api-key-not-valid</strong>.</p>
+
+  <div class="step">
+    <h2>Passo 1 – Copiar credenciais</h2>
+    <p><a href="https://console.firebase.google.com/project/_/settings/general" class="btn" target="_blank">Abrir Firebase Console</a></p>
+    <ol>
+      <li>Selecione o projeto <strong>Sistema APB</strong></li>
+      <li>Role até <strong>Seus apps</strong></li>
+      <li>Clique no app Web (<code>&lt;/&gt;</code>)</li>
+      <li>Copie cada valor do <code>firebaseConfig</code></li>
+    </ol>
+  </div>
+
+  <div class="step">
+    <h2>Passo 2 – Editar .env.local</h2>
+    <p>Abra o arquivo <code>.env.local</code> na raiz do projeto e cole os valores assim:</p>
+    <pre>VITE_FIREBASE_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+VITE_FIREBASE_AUTH_DOMAIN=seu-projeto.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=seu-projeto-id
+VITE_FIREBASE_STORAGE_BUCKET=seu-projeto.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abcdef123456</pre>
+    <ul>
+      <li>Sem aspas nos valores</li>
+      <li>Sem espaços antes ou depois</li>
+      <li>Formato: <code>NOME=valor</code></li>
+    </ul>
+    <p><button class="btn btn-secondary" onclick="navigator.clipboard.writeText('VITE_FIREBASE_API_KEY=\nVITE_FIREBASE_AUTH_DOMAIN=\nVITE_FIREBASE_PROJECT_ID=\nVITE_FIREBASE_STORAGE_BUCKET=\nVITE_FIREBASE_MESSAGING_SENDER_ID=\nVITE_FIREBASE_APP_ID='); alert('Template copiado!');">Copiar template</button></p>
+  </div>
+
+  <div class="step">
+    <h2>Passo 3 – Reiniciar o servidor</h2>
+    <p>No terminal, na pasta do projeto:</p>
+    <pre>npm run dev</pre>
+    <p>Ou execute <code>setup.bat</code> ou <code>configurar-firebase.bat</code>.</p>
+  </div>
+</body>
+</html>

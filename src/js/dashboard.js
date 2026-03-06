@@ -1,4 +1,4 @@
-import { getServicos, requireAuth } from './firebase.js';
+import { subscribeServicos, requireAuth } from './firebase.js';
 import {
   formatCurrency,
   formatDate,
@@ -8,9 +8,13 @@ import {
   calculateLucro,
   getStatusBadge,
   setupNavbarAuth,
+  setupSyncIndicator,
+  initSidebarMobile,
+  initTheme,
+  initKeyboardShortcuts,
 } from './utils.js';
-
-document.getElementById('current-month').textContent = `Mês: ${getCurrentMonth()}`;
+import { loadSearchData, initGlobalSearch } from './search.js';
+import { initAssistente } from './assistente.js';
 
 async function loadComponents() {
   try {
@@ -21,20 +25,33 @@ async function loadComponents() {
     document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
 
     setActiveMenuItem('dashboard');
+    initTheme();
+    initKeyboardShortcuts();
+    setupSyncIndicator();
+    initSidebarMobile();
+    initAssistente();
+    loadSearchData();
+    initGlobalSearch();
   } catch (error) {
     console.error('Erro ao carregar componentes:', error);
   }
 }
 
-async function initDashboard() {
-  try {
-    const servicos = await getServicos();
+function initDashboard() {
+  subscribeServicos((servicos) => {
+    try {
     
     if (!servicos || servicos.length === 0) {
       document.getElementById('messages').innerHTML =
         '<div class="text-center text-gray-500 py-8">Nenhum serviço registrado ainda.</div>';
+      document.getElementById('faturamento-valor').textContent = 'R$ 0,00';
+      document.getElementById('lucro-valor').textContent = 'R$ 0,00';
+      document.getElementById('servicos-valor').textContent = '0';
+      document.getElementById('receber-valor').textContent = 'R$ 0,00';
+      document.getElementById('ultimos-servicos').innerHTML = '';
       return;
     }
+    document.getElementById('messages').innerHTML = '';
 
     // Calcular métricas
     const currentMonth = new Date();
@@ -49,10 +66,12 @@ async function initDashboard() {
     const faturamento = servicosMes.reduce((sum, s) => sum + (s.valor_total || 0), 0);
     const custos = servicosMes.reduce((sum, s) => {
       const custosChapu = (s.quantidade_chapas || 0) * (s.valor_por_chapa || 0);
+      const custosStretch = (s.stretch_quantidade || 0) * (s.stretch_valor || 0);
+      const custosMatrin = s.matrin_valor || 0;
       const custosAd = s.custos_servico
         ? s.custos_servico.reduce((cs, c) => cs + (c.valor || 0), 0)
         : 0;
-      return sum + custosChapu + custosAd;
+      return sum + custosChapu + custosStretch + custosMatrin + custosAd;
     }, 0);
 
     const { lucro } = calculateLucro(faturamento, custos);
@@ -73,7 +92,8 @@ async function initDashboard() {
     servicosMes.forEach((s) => {
       const clienteNome = s.clientes?.nome || 'Sem cliente';
       clientesData[clienteNome] = (clientesData[clienteNome] || 0) + (s.valor_total || 0);
-      statusData[s.status]++;
+      const status = s.status || 'agendado';
+      statusData[status] = (statusData[status] || 0) + 1;
     });
 
     // Charts
@@ -82,15 +102,26 @@ async function initDashboard() {
     drawUltimosServicos(servicosMes.slice(0, 5));
   } catch (error) {
     console.error('Erro ao inicializar dashboard:', error);
-    showError('Erro ao carregar dados do dashboard');
+    const msg =
+      error.code === 'permission-denied'
+        ? 'Permissão negada no Firestore. Execute: firebase deploy --only firestore'
+        : error.message || 'Erro ao carregar dados do dashboard';
+    showError(msg);
   }
+  });
 }
+
+let chartClientesInstance = null;
+let chartStatusInstance = null;
 
 function drawClientesChart(clientesData) {
   const ctx = document.getElementById('chartClientes')?.getContext('2d');
   if (!ctx) return;
+  const labels = Object.keys(clientesData);
+  if (chartClientesInstance) chartClientesInstance.destroy();
+  if (labels.length === 0) return;
 
-  new Chart(ctx, {
+  chartClientesInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: Object.keys(clientesData),
@@ -126,6 +157,7 @@ function drawClientesChart(clientesData) {
 function drawStatusChart(statusData) {
   const ctx = document.getElementById('chartStatus')?.getContext('2d');
   if (!ctx) return;
+  if (chartStatusInstance) chartStatusInstance.destroy();
 
   const colors = {
     agendado: '#f97316',
@@ -134,7 +166,7 @@ function drawStatusChart(statusData) {
     recebido: '#22c55e',
   };
 
-  new Chart(ctx, {
+  chartStatusInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: Object.keys(statusData),
@@ -182,5 +214,7 @@ function drawUltimosServicos(servicos) {
 requireAuth().then(async (user) => {
   await loadComponents();
   await setupNavbarAuth(user);
+  const monthEl = document.getElementById('current-month');
+  if (monthEl) monthEl.textContent = `Mês: ${getCurrentMonth()}`;
   initDashboard();
 });

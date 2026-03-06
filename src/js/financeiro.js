@@ -1,7 +1,7 @@
 import {
-  getServicos,
+  subscribeServicos,
   insertPagamento,
-  updatePagamento,
+  updateServico,
   requireAuth,
 } from './firebase.js';
 import {
@@ -16,12 +16,16 @@ import {
   getPaymentStatus,
   calculateDaysOverdue,
   setupNavbarAuth,
+  setupSyncIndicator,
+  initSidebarMobile,
+  initTheme,
+  initKeyboardShortcuts,
 } from './utils.js';
+import { loadSearchData, initGlobalSearch } from './search.js';
+import { initAssistente } from './assistente.js';
 
 let servicos = [];
 let servicoSelecionado = null;
-
-document.getElementById('current-month').textContent = `Mês: ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
 
 async function loadComponents() {
   try {
@@ -32,6 +36,13 @@ async function loadComponents() {
     document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
 
     setActiveMenuItem('financeiro');
+    initTheme();
+    initKeyboardShortcuts();
+    setupSyncIndicator();
+    initSidebarMobile();
+    initAssistente();
+    loadSearchData();
+    initGlobalSearch();
   } catch (error) {
     console.error('Erro ao carregar componentes:', error);
   }
@@ -92,6 +103,7 @@ async function handleSavePagamento(e) {
 
   try {
     await insertPagamento(dados);
+    await updateServico(servicoSelecionado.id, { status: 'recebido' });
     showSuccess('Pagamento registrado com sucesso!');
     closeModal('modal-pagamento');
     await loadServicos();
@@ -101,16 +113,13 @@ async function handleSavePagamento(e) {
   }
 }
 
-async function loadServicos() {
-  try {
-    servicos = await getServicos();
+function loadServicos() {
+  subscribeServicos((data) => {
+    servicos = data;
     renderContasReceber();
     renderRanking();
     renderLucroChart();
-  } catch (error) {
-    console.error('Erro ao carregar serviços:', error);
-    showError('Erro ao carregar dados financeiros');
-  }
+  });
 }
 
 function renderContasReceber() {
@@ -150,15 +159,46 @@ function renderContasReceber() {
           </span>
         </td>
         <td>
-          <button class="btn btn-success btn-sm" onclick="abrirPagamento('${s.id}', ${s.valor_total})">
-            Recebido
-          </button>
+          <button class="btn btn-secondary btn-sm" onclick="gerarBoleto('${s.id}')">Boleto</button>
+          <button class="btn btn-success btn-sm ml-1" onclick="abrirPagamento('${s.id}', ${s.valor_total})">Recebido</button>
         </td>
       </tr>`;
     })
     .join('');
 
   window.abrirPagamento = abrirPagamento;
+  window.gerarBoleto = gerarBoleto;
+}
+
+const FUNCTIONS_URL = 'https://us-central1-sistema-apb.cloudfunctions.net';
+async function gerarBoleto(servicoId) {
+  const s = servicos.find((x) => x.id === servicoId);
+  if (!s) return;
+  const dueDate = new Date(s.data_servico);
+  dueDate.setDate(dueDate.getDate() + (s.clientes?.prazo_pagamento || 30));
+  const vencimento = dueDate.toISOString().split('T')[0];
+  try {
+    const res = await fetch(`${FUNCTIONS_URL}/gerarBoletoCora`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        valor: s.valor_total || 0,
+        vencimento,
+        clienteNome: s.clientes?.nome || 'Cliente',
+        clienteCnpj: (s.clientes?.cnpj || '').replace(/\D/g, ''),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao gerar boleto');
+    if (data.digitable_line) {
+      await navigator.clipboard.writeText(data.digitable_line);
+      showSuccess('Linha do boleto copiada! ' + (data.invoice_url ? 'Link: ' + data.invoice_url : ''));
+    } else {
+      showSuccess('Boleto gerado. Configure credenciais Cora no Firebase.');
+    }
+  } catch (err) {
+    showError('Erro ao gerar boleto: ' + err.message);
+  }
 }
 
 function abrirPagamento(servicoId, valor) {
@@ -189,10 +229,13 @@ function renderRanking() {
     faturamentoClientes[clienteNome] = (faturamentoClientes[clienteNome] || 0) + (s.valor_total || 0);
 
     const custosChapu = (s.quantidade_chapas || 0) * (s.valor_por_chapa || 0);
+    const custosStretch = (s.stretch_quantidade || 0) * (s.stretch_valor || 0);
+    const custosMatrin = s.matrin_valor || 0;
     const custosAd = s.custos_servico
       ? s.custos_servico.reduce((sum, c) => sum + (c.valor || 0), 0)
       : 0;
-    const { lucro } = calculateLucro(s.valor_total || 0, custosChapu + custosAd);
+    const custosTotal = custosChapu + custosStretch + custosMatrin + custosAd;
+    const { lucro } = calculateLucro(s.valor_total || 0, custosTotal);
     
     lucroClientes[clienteNome] = (lucroClientes[clienteNome] || 0) + lucro;
   });
@@ -234,7 +277,14 @@ function renderRanking() {
   }
 }
 
+let chartLucroInstance = null;
+
 function renderLucroChart() {
+  if (chartLucroInstance) {
+    chartLucroInstance.destroy();
+    chartLucroInstance = null;
+  }
+
   const currentMonth = new Date();
   const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
   const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
@@ -250,10 +300,13 @@ function renderLucroChart() {
     const clienteNome = s.clientes?.nome || 'Sem cliente';
     
     const custosChapu = (s.quantidade_chapas || 0) * (s.valor_por_chapa || 0);
+    const custosStretch = (s.stretch_quantidade || 0) * (s.stretch_valor || 0);
+    const custosMatrin = s.matrin_valor || 0;
     const custosAd = s.custos_servico
       ? s.custos_servico.reduce((sum, c) => sum + (c.valor || 0), 0)
       : 0;
-    const { margem } = calculateLucro(s.valor_total || 0, custosChapu + custosAd);
+    const custosTotal = custosChapu + custosStretch + custosMatrin + custosAd;
+    const { margem } = calculateLucro(s.valor_total || 0, custosTotal);
     
     if (!margemClientes[clienteNome]) {
       margemClientes[clienteNome] = [];
@@ -270,7 +323,10 @@ function renderLucroChart() {
   const ctx = document.getElementById('chartLucro')?.getContext('2d');
   if (!ctx) return;
 
-  new Chart(ctx, {
+  const labels = Object.keys(margemMedia);
+  if (labels.length === 0) return;
+
+  chartLucroInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: Object.keys(margemMedia),
@@ -307,5 +363,7 @@ function renderLucroChart() {
 requireAuth().then(async (user) => {
   await loadComponents();
   await setupNavbarAuth(user);
+  const m = document.getElementById('current-month');
+  if (m) m.textContent = `Mês: ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
   loadServicos();
 });

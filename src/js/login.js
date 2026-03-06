@@ -68,16 +68,29 @@ document.getElementById('form-login')?.addEventListener('submit', async (e) => {
     }
     window.location.href = '/src/pages/index.html';
   } catch (err) {
-    const msg =
-      err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password'
-        ? 'E-mail ou senha incorretos.'
-        : err.code === 'auth/user-not-found'
-          ? 'Usuário não encontrado.'
-          : err.code === 'auth/email-already-in-use'
-            ? 'Este e-mail já está em uso.'
-            : err.code === 'auth/weak-password'
-              ? 'Senha muito fraca. Use pelo menos 6 caracteres.'
-              : err.message;
+    let msg;
+    if (err.code === 'auth/configuration-not-found') {
+      msg =
+        'Firebase Auth não configurado. No Firebase Console → Authentication → Sign-in method, ative "E-mail/senha" e salve.';
+    } else if (err.code === 'auth/api-key-not-valid') {
+      msg =
+        'Chave da API inválida. Reinicie o servidor (npm run dev) após alterar .env.local. ' +
+        'Se estiver em produção, configure as variáveis no painel do host e faça novo deploy. ' +
+        'Verifique também restrições de HTTP referrer no Google Cloud Console.';
+    } else if (
+      err.code === 'auth/invalid-credential' ||
+      err.code === 'auth/wrong-password'
+    ) {
+      msg = 'E-mail ou senha incorretos.';
+    } else if (err.code === 'auth/user-not-found') {
+      msg = 'Usuário não encontrado.';
+    } else if (err.code === 'auth/email-already-in-use') {
+      msg = 'Este e-mail já está em uso.';
+    } else if (err.code === 'auth/weak-password') {
+      msg = 'Senha muito fraca. Use pelo menos 6 caracteres.';
+    } else {
+      msg = err.message;
+    }
     showMessage(msg, true);
     btn.disabled = false;
     btn.textContent = modoCriarConta ? 'Criar conta' : 'Entrar';
@@ -93,7 +106,19 @@ document.getElementById('btn-google')?.addEventListener('click', async () => {
     await signInWithGoogle();
     window.location.href = '/src/pages/index.html';
   } catch (err) {
-    const msg = err.code === 'auth/popup-closed-by-user' ? 'Login cancelado.' : err.message;
+    let msg;
+    if (err.code === 'auth/configuration-not-found') {
+      msg =
+        'Firebase Auth não configurado. No Firebase Console → Authentication → Sign-in method, ative "E-mail/senha" e salve.';
+    } else if (err.code === 'auth/api-key-not-valid') {
+      msg =
+        'Chave da API inválida. Reinicie o servidor (npm run dev). ' +
+        'Verifique .env.local e restrições no Google Cloud Console.';
+    } else if (err.code === 'auth/popup-closed-by-user') {
+      msg = 'Login cancelado.';
+    } else {
+      msg = err.message;
+    }
     showMessage(msg, true);
     btn.disabled = false;
     btn.innerHTML = `

@@ -90,6 +90,45 @@ npm run dev
 
 ---
 
+## ❌ Erro "configuration-not-found"
+
+Se aparecer **Firebase: Error (auth/configuration-not-found)**:
+
+1. Acesse o [Firebase Console](https://console.firebase.google.com) → seu projeto
+2. Vá em **Authentication** (menu lateral)
+3. Clique em **Sign-in method** (aba)
+4. Ative o provedor **E-mail/senha** e clique em **Salvar**
+5. Aguarde alguns segundos e tente criar a conta novamente
+
+---
+
+## ❌ Erro "api-key-not-valid"
+
+Se aparecer **Firebase: Error (auth/api-key-not-valid)**:
+
+1. **Reinicie o servidor** – O Vite só carrega `.env.local` ao iniciar:
+   ```bash
+   # Feche o terminal do npm run dev (Ctrl+C) e rode de novo:
+   npm run dev
+   ```
+
+2. **Verifique o .env.local** – Deve estar na raiz do projeto, sem aspas nem espaços:
+   ```
+   VITE_FIREBASE_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+   VITE_FIREBASE_AUTH_DOMAIN=sistema-apb.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=sistema-apb
+   VITE_FIREBASE_STORAGE_BUCKET=sistema-apb.firebasestorage.app
+   VITE_FIREBASE_MESSAGING_SENDER_ID=1041607229174
+   VITE_FIREBASE_APP_ID=1:1041607229174:web:xxxxx
+   ```
+
+3. **Restrições de HTTP referrer** – No [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → API Keys → sua chave Web:
+   - Se houver restrição de “Referrers de site”, adicione: `localhost:*`, `127.0.0.1:*` e seu domínio de produção (ex: `sistema-apb.web.app/*`)
+
+4. **Deploy (Vercel/Firebase Hosting)** – Configure as variáveis no painel do provedor e faça novo build/deploy
+
+---
+
 ## 🔒 Segurança - Regras Firestore
 
 O projeto inclui `firestore.rules` que exige autenticação. Para publicar:
